@@ -80,7 +80,7 @@ public class MainMenu extends AppCompatActivity
 		// Set flags and volume buttons
 		this.setVolumeControlStream(AudioManager.STREAM_MUSIC);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-		
+
 
 		// Initialize the three buttons
 		VarVault.stats = (ImageView) findViewById(R.id.left_stats);

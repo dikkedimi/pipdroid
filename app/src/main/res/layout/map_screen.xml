@@ -1,40 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/map_screen_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical" >
+    tools:context=".MapScreenActivity">
 
-    <!--Send out  -->
-    <!-- <com.google.android.maps.MapView
-        android:id="@+id/map"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:layout_marginLeft="20dip"
-        android:layout_marginRight="20dip"
-        android:layout_marginTop="10dip"
-        android:layout_marginBottom="10dip"
-        android:apiKey="AIzaSyDL2Xq5nMlQUG-a4aPHCV8x1sPCagwHCy0" />
-     -->
-     <!-- v2 refactor -->
-     <fragment
-        android:id="@+id/map"
+    <!-- Google Maps Fragment -->
+    <fragment
+        android:id="@+id/mapFragment"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="10dp"/>
-    <!-- Debugging
-    <com.google.android.maps.MapView
-        android:id="@+id/map"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:layout_marginLeft="20dip"
-        android:layout_marginRight="20dip"
-        android:layout_marginTop="10dip"
-        android:layout_marginBottom="10dip"
-        android:apiKey="AIzaSyAgk5G3maEyOyOi09aETfDBZ7fxNKMiMck"/> -->
-    
+        android:layout_height="match_parent" />
 
-</LinearLayout>
+    <!-- Optional: overlay buttons, UI, or labels -->
+    <Button
+        android:id="@+id/btnBack"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Back"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"
+        android:layout_margin="16dp"/>
+        
+</RelativeLayout>
