@@ -1,17 +1,16 @@
-plugins {
-    alias(libs.plugins.android.application)
-}
+
 
 android {
     namespace = "com.skettidev.pipdroid"
     compileSdk {
-        version = release(36)
+        version = release(34)
     }
 
     defaultConfig {
         applicationId = "com.skettidev.pipdroid"
-        minSdk = 30
-        targetSdk = 36
+        minSdk = 26
+        targetSdk = 34
+        maxSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -25,6 +24,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        debug {
+
         }
     }
     compileOptions {
@@ -45,4 +47,7 @@ dependencies {
     androidTestImplementation(libs.espresso.core)
 //    runtimeOnly files('libs/a.jar'; 'libs/b.jar')
 //    runtimeOnly fileTree('libs') { include '*.jar' }
+}
+plugins {
+    alias(libs.plugins.android.application) version "8.12.0"
 }
