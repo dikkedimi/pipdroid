@@ -11,8 +11,15 @@ import android.view.View.OnClickListener;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-public class Splash extends Activity implements OnClickListener{
-	
+import android.os.Bundle;
+import android.widget.Toast;
+import androidx.activity.OnBackPressedCallback;
+import androidx.appcompat.app.AppCompatActivity;
+
+
+public class Splash extends AppCompatActivity implements View.OnClickListener {
+
+	private boolean doubleBackToExitPressedOnce = false;
 	private LinearLayout frame = null;
 	private TextView txt = null;
 	private Typeface font;
@@ -22,24 +29,24 @@ public class Splash extends Activity implements OnClickListener{
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.splash);
-        
+        setContentView(R.layout.activity_splash);
+//
         mp = MediaPlayer.create(getApplicationContext(), R.raw.boot);
         mp.start();
-        
+
         txt = (TextView) findViewById(R.id.splash_info);
-        frame = (LinearLayout) findViewById(R.id.splash_frame);
-        
+        Framelayout frame = (LinearLayout) findViewById(R.id.frame);
+
         //Set custom font
-        font = Typeface.createFromAsset(getAssets(), "Monofonto.ttf");  
+        font = Typeface.createFromAsset(getAssets(), "Monofonto.ttf");
         txt.setTypeface(font);
-        
+
         frame.setOnClickListener(this);
     }
 
-	public void onClick(View source) {
+	public void onClick(View v) {
 		
-		if (source.equals(frame))
+		if (v.getId() == R.id.frame)
 		{
 			txt.setTextAppearance(getApplicationContext(), R.style.text_clicked);
 			txt.setTypeface(font);
@@ -56,14 +63,6 @@ public class Splash extends Activity implements OnClickListener{
 		mp.stop();
 		super.onDestroy();
 	}
-	
-	@Override
-	public boolean onKeyDown(int keyCode, KeyEvent event) {
-	    if ((keyCode == KeyEvent.KEYCODE_BACK)) {
-	    	this.finish();
-	    	return true;
-	        //Log.d(this.getClass().getName(), "back button pressed");
-	    }
-	    return super.onKeyDown(keyCode, event);
-	}
+
+
 }

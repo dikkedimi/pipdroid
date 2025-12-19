@@ -31,22 +31,22 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.fragment.app.FragmentActivity;
 import androidx.activity.ComponentActivity;
-import androidx.activity.OnBackPressedCallback;
+//import androidx.activity.OnBackPressedCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-
+import androidx.appcompat.app.AppCompatActivity;
 
 
 public class MainMenu extends FragmentActivity
-		implements OnClickListener,
+		implements View.OnClickListener,
 		OnLongClickListener,
 		SurfaceHolder.Callback,
-		AppCompatActivity,
-		OnMapReadyCallback {
+		OnMapReadyCallback
+{
 
 	// ########################
 	// ## On app start ########
