@@ -20,7 +20,7 @@ import androidx.appcompat.app.AppCompatActivity;
 public class Splash extends AppCompatActivity implements View.OnClickListener {
 
 	private boolean doubleBackToExitPressedOnce = false;
-	private LinearLayout frame = null;
+//	private LinearLayout frame = null;
 	private TextView txt = null;
 	private Typeface font;
 	private MediaPlayer mp;
@@ -29,13 +29,13 @@ public class Splash extends AppCompatActivity implements View.OnClickListener {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_splash);
+        setContentView(R.layout.splash);
 //
         mp = MediaPlayer.create(getApplicationContext(), R.raw.boot);
         mp.start();
 
         txt = (TextView) findViewById(R.id.splash_info);
-        Framelayout frame = (LinearLayout) findViewById(R.id.frame);
+        LinearLayout frame = (LinearLayout) findViewById(R.id.splash_frame);
 
         //Set custom font
         font = Typeface.createFromAsset(getAssets(), "Monofonto.ttf");
@@ -46,7 +46,7 @@ public class Splash extends AppCompatActivity implements View.OnClickListener {
 
 	public void onClick(View v) {
 		
-		if (v.getId() == R.id.frame)
+		if (v.getId() == R.id.splash_frame)
 		{
 			txt.setTextAppearance(getApplicationContext(), R.style.text_clicked);
 			txt.setTypeface(font);
