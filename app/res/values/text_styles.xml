@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="text_normal">
+	    <!--suppress AndroidDomInspection -->
+        <item name="android:textColor">#bbffbb</item>
+	    <!--suppress AndroidDomInspection -->
+        <item name="android:textSize">28sp</item>
+	    <!--suppress AndroidDomInspection -->
+        <item name="android:shadowColor">#aaeeaa</item>
+	    <!--suppress AndroidDomInspection -->
+        <item name="android:shadowDx">0</item>
+	    <!--suppress AndroidDomInspection -->
+        <item name="android:shadowDy">0</item>
+	    <!--suppress AndroidDomInspection -->
+        <item name="android:shadowRadius">0</item>
+    </style>
+    
+    <style name="text_clicked">
+	    <!--suppress AndroidDomInspection -->
+        <item name="android:textColor">#88dd88</item>
+	    <!--suppress AndroidDomInspection -->
+        <item name="android:textSize">28sp</item>
+	    <!--suppress AndroidDomInspection -->
+        <item name="android:shadowColor">#bbffbb</item>
+	    <!--suppress AndroidDomInspection -->
+        <item name="android:shadowDx">0</item>
+	    <!--suppress AndroidDomInspection -->
+        <item name="android:shadowDy">0</item>
+	    <!--suppress AndroidDomInspection -->
+        <item name="android:shadowRadius">5</item>
+    </style>
+    
+</resources>
