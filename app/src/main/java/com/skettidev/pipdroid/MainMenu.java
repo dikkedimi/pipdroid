@@ -63,13 +63,9 @@ public class MainMenu extends AppCompatActivity
 		// Request READ_CONTACTS at runtime if not yet granted
 		if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
 				!= PackageManager.PERMISSION_GRANTED) {
-			ActivityCompat.requestPermissions(this,
-					new String[]{Manifest.permission.READ_CONTACTS},
-					100); // 100 = request code
-			return; // stop until permission result arrives
+			ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_CONTACTS}, 1);
 		} else {
-			// Permission already granted; you can access contacts here
-			loadContacts();
+			loadContactsAndCount();
 		}
 		setContentView(R.layout.main);
 
@@ -84,15 +80,7 @@ public class MainMenu extends AppCompatActivity
 		// Set flags and volume buttons
 		this.setVolumeControlStream(AudioManager.STREAM_MUSIC);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
-		// Get contacts
-		@SuppressWarnings("deprecation")
-		Cursor cursor = getContentResolver().query(
-				loadContacts()
-//				ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-//				null, null, null, null
-		);
-		VarVault.numContacts = cursor.getCount();
+		
 
 		// Initialize the three buttons
 		VarVault.stats = (ImageView) findViewById(R.id.left_stats);
@@ -243,11 +231,22 @@ public class MainMenu extends AppCompatActivity
 			VarVault.isCamOn = false;
 		}
 	}
-	private void loadContacts() {
-		// Example: just show a toast for now
-		Toast.makeText(this, "Contacts would be loaded here", Toast.LENGTH_SHORT).show();
+	private void loadContactsAndCount() {
+		// Query the contacts
+		Cursor cursor = getContentResolver().query(
+				ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+				null, null, null,
+				ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC"
+		);
 
-		// TODO: Add your real contact-reading logic here
+		if (cursor != null) {
+			VarVault.numContacts = cursor.getCount();
+			cursor.close(); // Always close the cursor
+		} else {
+			VarVault.numContacts = 0;
+		}
+
+		Toast.makeText(this, "Found " + VarVault.numContacts + " contacts", Toast.LENGTH_SHORT).show();
 	}
 	private void statsClicked() {
 		// Clear crap
