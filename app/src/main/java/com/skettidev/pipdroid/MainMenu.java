@@ -16,12 +16,10 @@ import android.hardware.Camera.Parameters;
 import android.media.AudioManager;
 import android.provider.ContactsContract;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
@@ -29,9 +27,6 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import androidx.fragment.app.FragmentActivity;
-import androidx.activity.ComponentActivity;
-//import androidx.activity.OnBackPressedCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.GoogleMap;
@@ -42,18 +37,37 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import android.os.Bundle;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentActivity;
+import android.os.Bundle;
+import android.widget.Toast;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.location.Location;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import androidx.core.app.ActivityCompat;
 
-public class MainMenu extends AppCompatActivity
-		implements View.OnClickListener,
+
+
+public class MainMenu extends FragmentActivity
+		implements OnMapReadyCallback,
+		View.OnClickListener,
 		OnLongClickListener,
 		SurfaceHolder.Callback,
 		OnMapReadyCallback
 {
-
+//private vars
+	private GoogleMap mMap;
+	private FusedLocationProviderClient fusedLocationClient;
 	// ########################
 	// ## On app start ########
 	// ########################
@@ -67,6 +81,15 @@ public class MainMenu extends AppCompatActivity
 		} else {
 			loadContactsAndCount();
 		}
+		// Initialize the map fragment
+		SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+				.findFragmentById(R.id.map);
+		if (mapFragment != null) {
+			mapFragment.getMapAsync(this);  // This will call onMapReady once the map is ready
+		}
+
+		// Initialize FusedLocationProviderClient
+		fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 		setContentView(R.layout.main);
 
 		// Init sound
@@ -111,16 +134,52 @@ public class MainMenu extends AppCompatActivity
 		initCaps();
 	}
 	@Override
+	public void onMapReady(GoogleMap googleMap) {
+		mMap = googleMap;
+
+		// Check if location permission is granted
+		if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+				!= PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+				!= PackageManager.PERMISSION_GRANTED) {
+			// Request permissions if not granted
+			ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+			return;
+		}
+
+
+		// Enable the location layer on the map
+			mMap.setMyLocationEnabled(true);
+
+		// Get the current location of the device
+			fusedLocationClient.getLastLocation()
+					.addOnSuccessListener(this, new OnSuccessListener<Location>() {
+		@Override
+		public void onSuccess(Location location) {
+			if (location != null) {
+				// Get the current location as a LatLng object
+				LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
+
+				// Add a marker at the current location
+				mMap.addMarker(new MarkerOptions().position(currentLocation).title("You are here"));
+
+				// Move the camera to the current location with zoom
+				mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15)); // Zoom level 15
+			} else {
+				Toast.makeText(MainMenu.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
+			}
+		}
+	});
+
+	@Override
 	public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
 		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-		if (requestCode == 100) {
+
+		if (requestCode == 1) {
 			if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-				// Now permission is granted — re‑enter initialization logic
-				recreate(); // restart activity to re‑run onCreate
+				// Permission granted, initialize the map again
+				onMapReady(mMap);
 			} else {
-				// Permission denied — show a message or handle gracefully
-				Toast.makeText(this, "Contacts permission is required.", Toast.LENGTH_SHORT).show();
-				finish(); // optionally close the activity
+				Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
 			}
 		}
 	}
@@ -190,14 +249,28 @@ public class MainMenu extends AppCompatActivity
 	}
 	@Override
 	public void onMapReady(GoogleMap googleMap) {
-		LatLng vault = new LatLng(36.7783, -119.4179); // example location
-		googleMap.addMarker(new MarkerOptions()
-				.position(vault)
-				.title("Vault Location"));
+		mMap = googleMap;
 
-		googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(vault, 5f));
+		// Example: Set a marker and move the camera to a location (you can change the coordinates)
+		LatLng exampleLocation = new LatLng(40.7128, -74.0060); // Example: New York City
+		mMap.addMarker(new MarkerOptions().position(exampleLocation).title("Marker in New York"));
+		mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(exampleLocation, 10)); // Zoom level 10
 	}
 
+	private GoogleMap mMap;
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_main_menu);
+
+		// Initialize the map fragment
+		SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+				.findFragmentById(R.id.map);
+		if (mapFragment != null) {
+			mapFragment.getMapAsync(this);  // This will call onMapReady once the map is ready
+		}
+	}
 	private void flashlightClicked() {
 		if (VarVault.mCamera == null) {
 			VarVault.preview = (SurfaceView) findViewById(R.id.PREVIEW);

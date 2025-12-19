@@ -14,10 +14,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-//import androidx.fragment.app.FragmentActivity;
-//import com.google.android.gms.maps.GoogleMap;
-//import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.GoogleMap;
+
 public class VarVault {
 
 	// SPECIAL stats
@@ -78,7 +76,7 @@ public class VarVault {
 	// Images
 	protected static ImageView specialImage, skillImage;
 
-	public static GoogleMap map; // type must be GoogleMap
+//	public static GoogleMap map; // type must be GoogleMap
 
 	protected static Typeface font;
 
