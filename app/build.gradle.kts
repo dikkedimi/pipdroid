@@ -3,13 +3,13 @@
 android {
     namespace = "com.skettidev.pipdroid"
     compileSdk {
-        version = release(34)
+        version = release(36)
     }
 
     defaultConfig {
         applicationId = "com.skettidev.pipdroid"
-        minSdk = 26
-        targetSdk = 34
+        minSdk = 21
+        targetSdk = 36
         maxSdk = 36
         versionCode = 1
         versionName = "1.0"

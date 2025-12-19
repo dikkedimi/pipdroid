@@ -54,7 +54,7 @@ public class MainMenu extends FragmentActivity
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.splash);
+		setContentView(R.layout.main);
 
 		// Init sound
 		HandleSound.initSound(this.getApplicationContext());

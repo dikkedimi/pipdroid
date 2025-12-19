@@ -16,7 +16,8 @@
         android:scaleType="centerInside"
         android:layout_weight="0.9"
         android:src="@drawable/vaultboy_splash" />
-
+
+
     <TextView
         android:id="@+id/splash_info"
         android:layout_width="wrap_content"
@@ -29,5 +30,6 @@
         android:shadowDx="0"
         android:shadowDy="0"
         android:shadowRadius="3" />
+
 
 </LinearLayout>
