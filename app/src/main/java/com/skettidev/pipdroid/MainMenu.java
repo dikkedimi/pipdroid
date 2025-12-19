@@ -38,10 +38,16 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import androidx.core.content.ContextCompat;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import android.os.Bundle;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
-
-public class MainMenu extends FragmentActivity
+public class MainMenu extends AppCompatActivity
 		implements View.OnClickListener,
 		OnLongClickListener,
 		SurfaceHolder.Callback,
@@ -54,6 +60,17 @@ public class MainMenu extends FragmentActivity
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		// Request READ_CONTACTS at runtime if not yet granted
+		if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
+				!= PackageManager.PERMISSION_GRANTED) {
+			ActivityCompat.requestPermissions(this,
+					new String[]{Manifest.permission.READ_CONTACTS},
+					100); // 100 = request code
+			return; // stop until permission result arrives
+		} else {
+			// Permission already granted; you can access contacts here
+			loadContacts();
+		}
 		setContentView(R.layout.main);
 
 		// Init sound
@@ -71,8 +88,9 @@ public class MainMenu extends FragmentActivity
 		// Get contacts
 		@SuppressWarnings("deprecation")
 		Cursor cursor = getContentResolver().query(
-				ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-				null, null, null, null
+				loadContacts()
+//				ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+//				null, null, null, null
 		);
 		VarVault.numContacts = cursor.getCount();
 
@@ -103,6 +121,20 @@ public class MainMenu extends FragmentActivity
 
 		onClick(VarVault.stats);
 		initCaps();
+	}
+	@Override
+	public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+		if (requestCode == 100) {
+			if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+				// Now permission is granted — re‑enter initialization logic
+				recreate(); // restart activity to re‑run onCreate
+			} else {
+				// Permission denied — show a message or handle gracefully
+				Toast.makeText(this, "Contacts permission is required.", Toast.LENGTH_SHORT).show();
+				finish(); // optionally close the activity
+			}
+		}
 	}
 	public void onClick(View source) {
 
@@ -211,7 +243,12 @@ public class MainMenu extends FragmentActivity
 			VarVault.isCamOn = false;
 		}
 	}
+	private void loadContacts() {
+		// Example: just show a toast for now
+		Toast.makeText(this, "Contacts would be loaded here", Toast.LENGTH_SHORT).show();
 
+		// TODO: Add your real contact-reading logic here
+	}
 	private void statsClicked() {
 		// Clear crap
 		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
