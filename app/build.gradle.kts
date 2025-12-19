@@ -36,10 +36,13 @@ android {
 dependencies {
     implementation(libs.appcompat)
     implementation(libs.material)
-    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation("com.google.android.gms:play-services-maps:19.2.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 //    runtimeOnly files('libs/a.jar'; 'libs/b.jar')
 //    runtimeOnly fileTree('libs') { include '*.jar' }
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.activity:activity:1.7.2")
+    implementation("androidx.appcompat:appcompat:1.6.1")
 }

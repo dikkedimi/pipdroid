@@ -5,7 +5,7 @@
     android:orientation="vertical" >
 
     <!--Send out  -->
-    <com.google.android.maps.MapView
+    <!-- <com.google.android.maps.MapView
         android:id="@+id/map"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
@@ -14,7 +14,17 @@
         android:layout_marginTop="10dip"
         android:layout_marginBottom="10dip"
         android:apiKey="AIzaSyDL2Xq5nMlQUG-a4aPHCV8x1sPCagwHCy0" />
-    
+     -->
+     <!-- v2 refactor -->
+     <fragment
+        android:id="@+id/map"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"/>
     <!-- Debugging
     <com.google.android.maps.MapView
         android:id="@+id/map"

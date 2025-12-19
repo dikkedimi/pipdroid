@@ -2,6 +2,7 @@ package com.skettidev.pipdroid;
 
 import java.io.IOException;
 
+import android.os.Bundle;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -13,7 +14,6 @@ import android.graphics.Typeface;
 import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
 import android.media.AudioManager;
-import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -29,28 +29,40 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
 import androidx.fragment.app.FragmentActivity;
-import com.google.android.gms.maps.GoogleMap;
+import androidx.activity.ComponentActivity;
+import androidx.activity.OnBackPressedCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 
-public class MainMenu extends FragmentActivity implements OnClickListener, OnLongClickListener,
-		SurfaceHolder.Callback {
-	
+
+public class MainMenu extends FragmentActivity
+		implements OnClickListener,
+		OnLongClickListener,
+		SurfaceHolder.Callback,
+		AppCompatActivity,
+		OnMapReadyCallback {
+
 	// ########################
 	// ## On app start ########
 	// ########################
-
+	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 
 		// Init sound
 		HandleSound.initSound(this.getApplicationContext());
-		
+
 		VarVault.font = Typeface.createFromAsset(getAssets(), "Monofonto.ttf");
-		VarVault.curWG = new Stat(); VarVault.maxWG = new Stat(); VarVault.curCaps = new Stat();
+		VarVault.curWG = new Stat();
+		VarVault.maxWG = new Stat();
+		VarVault.curCaps = new Stat();
 
 		// Set flags and volume buttons
 		this.setVolumeControlStream(AudioManager.STREAM_MUSIC);
@@ -58,9 +70,10 @@ public class MainMenu extends FragmentActivity implements OnClickListener, OnLon
 
 		// Get contacts
 		@SuppressWarnings("deprecation")
-		Cursor cursor = managedQuery(
-				ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null,
-				null, null);
+		Cursor cursor = getContentResolver().query(
+				ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+				null, null, null, null
+		);
 		VarVault.numContacts = cursor.getCount();
 
 		// Initialize the three buttons
@@ -83,19 +96,18 @@ public class MainMenu extends FragmentActivity implements OnClickListener, OnLon
 		VarVault.data.setOnClickListener(this);
 
 		// Get stats and fill arrays
-		
+
 		initSkills();
 		initSpecial();
 		InitializeArrays.all();
-		
+
 		onClick(VarVault.stats);
 		initCaps();
 	}
-
 	public void onClick(View source) {
 
 		VarVault.curCaps.setValue(VarVault.curCaps.getValue()+5);
-		
+
 		// Play a tune, dependent on source.
 
 		if (VarVault.MAIN_BUTTONS.contains(source))
@@ -134,11 +146,11 @@ public class MainMenu extends FragmentActivity implements OnClickListener, OnLon
 		else if (source == VarVault.weaponsLL)
 			weaponsClicked();
 		else if (VarVault.Weapons.contains(source)) {}
-		
+
 		else if (source == VarVault.apparelLL)
 			apparelClicked();
 		else if (VarVault.Apparel.contains(source)) {}
-		
+
 		else if (source == VarVault.aidLL) {updateCAPS();
 		} else if (source == VarVault.miscLL) {updateCAPS();
 		} else if (source == VarVault.ammoLL) {updateCAPS();
@@ -155,6 +167,15 @@ public class MainMenu extends FragmentActivity implements OnClickListener, OnLon
 			bottomBar.removeAllViews();
 		}
 
+	}
+	@Override
+	public void onMapReady(GoogleMap googleMap) {
+		LatLng vault = new LatLng(36.7783, -119.4179); // example location
+		googleMap.addMarker(new MarkerOptions()
+				.position(vault)
+				.title("Vault Location"));
+
+		googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(vault, 5f));
 	}
 
 	private void flashlightClicked() {
@@ -349,18 +370,25 @@ public class MainMenu extends FragmentActivity implements OnClickListener, OnLon
 		ViewGroup bottomBar = (ViewGroup) findViewById(R.id.bottom_bar);
 		LayoutInflater inf = this.getLayoutInflater();
 
-		VarVault.map = (SupportMapFragment) findViewById(R.id.map);
-		map.setEnabled(true);
-
 		midPanel.removeAllViews();
 		topBar.removeAllViews();
 		bottomBar.removeAllViews();
 
 		// Main screen turn on
-		inf.inflate(R.layout.map_screen, midPanel);
+		midPanel.removeAllViews();
+
+		SupportMapFragment mapFragment = SupportMapFragment.newInstance();
+		getSupportFragmentManager()
+				.beginTransaction()
+				.replace(R.id.mid_panel, mapFragment)
+				.commit();
+		if (mapFragment != null) {
+			mapFragment.getMapAsync(this);
+		}
 		inf.inflate(R.layout.items_bar_top, topBar);
 		inf.inflate(R.layout.items_bar_bottom, bottomBar);
 	}
+
 
 	private void statusClicked() {
 
@@ -671,7 +699,8 @@ public class MainMenu extends FragmentActivity implements OnClickListener, OnLon
 					+ VarVault.melee.getValue() + VarVault.repair.getValue() + VarVault.science.getValue()
 					+ VarVault.small_guns.getValue() + VarVault.sneak.getValue()
 					+ VarVault.speech.getValue() + VarVault.unarmed.getValue())) {
-				Intent i = new Intent(MainMenu.this, SetSkills.class);
+				Intent i = new Intent(Intent.ACTION_MAIN)
+						.setClassName(MainMenu.this, "com.skettidev.pipdroid.Splash");
 				MainMenu.this.startActivityForResult(i, 1);
 			}
 
@@ -681,18 +710,8 @@ public class MainMenu extends FragmentActivity implements OnClickListener, OnLon
 	}
 
 	@Override
-	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		if ((keyCode == KeyEvent.KEYCODE_BACK)) {
-			Intent intent = new Intent(Intent.ACTION_MAIN).setClassName(Act.this, "com.skettidev.pipdroid.Splash");
-			intent.addCategory(Intent.CATEGORY_HOME);
-			intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-			startActivity(intent);
-		}
-		return super.onKeyDown(keyCode, event);
-	}
-
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
+		super.onActivityResult(requestCode, resultCode, data);
 		if (requestCode == 0 && resultCode == RESULT_OK) {
 			SharedPreferences prefs = getSharedPreferences("SPECIAL", 0);
 			VarVault.strength.setValue(prefs.getInt("STRENGTH", -2));
@@ -1133,8 +1152,6 @@ public class MainMenu extends FragmentActivity implements OnClickListener, OnLon
 		
 		VarVault.caps.setText("Caps: " + VarVault.curCaps.getValue());
 	}
-	
-	@Override
 	protected boolean isRouteDisplayed() {
 		// TODO Auto-generated method stub
 		return false;
