@@ -27,6 +27,7 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import androidx.fragment.app.Fragment;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.GoogleMap;
@@ -38,27 +39,19 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import androidx.core.app.ActivityCompat;
 import android.widget.Toast;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentActivity;
-import android.os.Bundle;
-import android.widget.Toast;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
-import android.Manifest;
-import android.content.pm.PackageManager;
-import androidx.core.app.ActivityCompat;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
+import android.location.Location;
 
 
 
 public class MainMenu extends FragmentActivity
 		implements OnMapReadyCallback,
+		SurfaceHolder.Callback,
 		View.OnClickListener,
-		OnLongClickListener,
-		SurfaceHolder.Callback
+		View.OnLongClickListener
 		 {
 	//private vars
 	private GoogleMap mMap;
@@ -78,10 +71,10 @@ public class MainMenu extends FragmentActivity
 			loadContactsAndCount();
 		}
 		// Initialize the map fragment
-		SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-				.findFragmentById(R.id.map);
+		Fragment mapFragment = getSupportFragmentManager().findFragmentById(R.id.mapFragment);
+
 		if (mapFragment != null) {
-			mapFragment.getMapAsync(this);  // This will call onMapReady once the map is ready
+			// Do something with the map fragment, e.g., interact with it
 		}
 
 		// Initialize FusedLocationProviderClient
@@ -181,7 +174,7 @@ public class MainMenu extends FragmentActivity
 				}
 			}
 		}
-		public void onClic(View source){
+		public void onClick(View source){
 
 			VarVault.curCaps.setValue(VarVault.curCaps.getValue() + 5);
 
@@ -242,30 +235,19 @@ public class MainMenu extends FragmentActivity
 			}
 
 		}
-		@Override
-		public void onMapReady (GoogleMap googleMap){
-			mMap = googleMap;
 
-			// Example: Set a marker and move the camera to a location (you can change the coordinates)
-			LatLng exampleLocation = new LatLng(40.7128, -74.0060); // Example: New York City
-			mMap.addMarker(new MarkerOptions().position(exampleLocation).title("Marker in New York"));
-			mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(exampleLocation, 10)); // Zoom level 10
-		}
-
-
-
-		@Override
-		protected void onCreate(Bundle savedInstanceState){
-			super.onCreate(savedInstanceState);
-			setContentView(R.layout.activity_main_menu);
-
-			// Initialize the map fragment
-			SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-					.findFragmentById(R.id.map);
-			if (mapFragment != null) {
-				mapFragment.getMapAsync(this);  // This will call onMapReady once the map is ready
-			}
-		}
+//		@Override
+//		protected void onCreate(Bundle savedInstanceState){
+//			super.onCreate(savedInstanceState);
+//			setContentView(R.layout.activity_main_menu);
+//
+//			// Initialize the map fragment
+//			SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+//					.findFragmentById(R.id.map);
+//			if (mapFragment != null) {
+//				mapFragment.getMapAsync(this);  // This will call onMapReady once the map is ready
+//			}
+//		}
 
 		private void flashlightClicked() {
 			if (VarVault.mCamera == null) {
@@ -1069,7 +1051,7 @@ public class MainMenu extends FragmentActivity
 			}
 		}
 
-		public boolean onLongClic(View source){
+		public boolean onLongClick(View source){
 			// TODO For Items, wear them.
 			ContentValues values = new ContentValues();
 			ContentValues NOTvalues = new ContentValues();
