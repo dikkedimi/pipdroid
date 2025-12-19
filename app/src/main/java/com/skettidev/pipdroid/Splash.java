@@ -1,33 +1,23 @@
 package com.skettidev.pipdroid;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Typeface;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.provider.ContactsContract;
-import android.view.KeyEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
-import android.os.Bundle;
 import android.widget.Toast;
-import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
-import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.Bundle;
-import android.widget.Toast;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 
-public class Splash extends AppCompatActivity implements AppCompatActivity, View.OnClickListener  {
+public class Splash extends AppCompatActivity implements View.OnClickListener  {
 
 	private boolean doubleBackToExitPressedOnce = false;
 //	private LinearLayout frame = null;
@@ -60,8 +50,7 @@ public class Splash extends AppCompatActivity implements AppCompatActivity, View
 		if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
 				!= PackageManager.PERMISSION_GRANTED) {
 			ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_CONTACTS}, 1);
-		} else {
-			loadContactsAndCount();
+			return;
 		}
 		// Check if location permission is granted
 		if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -70,10 +59,15 @@ public class Splash extends AppCompatActivity implements AppCompatActivity, View
 			// Request permissions if not granted
 			ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
 			return;
-		} else { Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
 		}
+		if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+				!= PackageManager.PERMISSION_GRANTED) {
+			// If permission is not granted, request it
+			ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 1);
+		}
+
         setContentView(R.layout.splash);
-//
+
         mp = MediaPlayer.create(getApplicationContext(), R.raw.boot);
         mp.start();
 
@@ -106,6 +100,4 @@ public class Splash extends AppCompatActivity implements AppCompatActivity, View
 		mp.stop();
 		super.onDestroy();
 	}
-
-
 }

@@ -122,7 +122,14 @@ public class MainMenu extends FragmentActivity
 		mMap = googleMap;
 
 // we checked locations permissions here...
-
+		if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+				!= PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+				!= PackageManager.PERMISSION_GRANTED) {
+			// Request permissions if not granted
+			ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+			return;
+		} else { Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
+		}
 
 		// Enable the location layer on the map
 		mMap.setMyLocationEnabled(true);
