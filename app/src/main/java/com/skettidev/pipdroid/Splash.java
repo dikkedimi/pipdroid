@@ -1,10 +1,13 @@
 package com.skettidev.pipdroid;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Typeface;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -15,20 +18,60 @@ import android.os.Bundle;
 import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Bundle;
+import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 
-public class Splash extends AppCompatActivity implements View.OnClickListener {
+public class Splash extends AppCompatActivity implements AppCompatActivity, View.OnClickListener  {
 
 	private boolean doubleBackToExitPressedOnce = false;
 //	private LinearLayout frame = null;
 	private TextView txt = null;
 	private Typeface font;
 	private MediaPlayer mp;
-	
+
+	private void loadContactsAndCount() {
+		// Query the contacts
+		Cursor cursor = getContentResolver().query(
+				ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+				null, null, null,
+				ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC"
+		);
+
+		if (cursor != null) {
+			VarVault.numContacts = cursor.getCount();
+			cursor.close(); // Always close the cursor
+		} else {
+			VarVault.numContacts = 0;
+		}
+
+		Toast.makeText(this, "Found " + VarVault.numContacts + " contacts", Toast.LENGTH_SHORT).show();
+	}
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+		// Request READ_CONTACTS at runtime if not yet granted
+		if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
+				!= PackageManager.PERMISSION_GRANTED) {
+			ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_CONTACTS}, 1);
+		} else {
+			loadContactsAndCount();
+		}
+		// Check if location permission is granted
+		if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+				!= PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+				!= PackageManager.PERMISSION_GRANTED) {
+			// Request permissions if not granted
+			ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+			return;
+		} else { Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
+		}
         setContentView(R.layout.splash);
 //
         mp = MediaPlayer.create(getApplicationContext(), R.raw.boot);
