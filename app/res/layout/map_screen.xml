@@ -5,7 +5,7 @@
     android:orientation="vertical" >
 
     <!--Send out  -->
-    <com.google.android.maps.MapView
+    <ccom.google.android.gms.maps.MapView
         android:id="@+id/map"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
@@ -16,7 +16,7 @@
         android:apiKey="AIzaSyDL2Xq5nMlQUG-a4aPHCV8x1sPCagwHCy0" />
     
     <!-- Debugging
-    <com.google.android.maps.MapView
+    <com.google.android.gms.maps.SupportMapFragment
         android:id="@+id/map"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"

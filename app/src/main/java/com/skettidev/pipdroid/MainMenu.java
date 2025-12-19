@@ -30,11 +30,12 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.google.android.maps.MapActivity;
-import com.google.android.maps.MapView;
+import androidx.fragment.app.FragmentActivity;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.SupportMapFragment;
 
 
-public class MainMenu extends MapActivity implements OnClickListener, OnLongClickListener,
+public class MainMenu extends FragmentActivity implements OnClickListener, OnLongClickListener,
 		SurfaceHolder.Callback {
 	
 	// ########################
@@ -347,8 +348,8 @@ public class MainMenu extends MapActivity implements OnClickListener, OnLongClic
 		ViewGroup topBar = (ViewGroup) findViewById(R.id.top_bar);
 		ViewGroup bottomBar = (ViewGroup) findViewById(R.id.bottom_bar);
 		LayoutInflater inf = this.getLayoutInflater();
-		
-		VarVault.map = (MapView) findViewById(R.id.map);
+
+		VarVault.map = (SupportMapFragment) findViewById(R.id.map);
 		//map.setEnabled(true);
 
 		midPanel.removeAllViews();
