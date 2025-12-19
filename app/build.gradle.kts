@@ -9,7 +9,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.pipdroid_3000_mkii"
+        applicationId = "com.skettidev.pipdroid"
         minSdk = 30
         targetSdk = 36
         versionCode = 1

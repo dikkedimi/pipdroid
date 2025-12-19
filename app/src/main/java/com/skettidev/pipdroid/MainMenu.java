@@ -350,7 +350,7 @@ public class MainMenu extends FragmentActivity implements OnClickListener, OnLon
 		LayoutInflater inf = this.getLayoutInflater();
 
 		VarVault.map = (SupportMapFragment) findViewById(R.id.map);
-		//map.setEnabled(true);
+		map.setEnabled(true);
 
 		midPanel.removeAllViews();
 		topBar.removeAllViews();
@@ -683,7 +683,7 @@ public class MainMenu extends FragmentActivity implements OnClickListener, OnLon
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if ((keyCode == KeyEvent.KEYCODE_BACK)) {
-			Intent intent = new Intent(Intent.ACTION_MAIN).setClassName(Act.this, "com.example.pipdroid_3000_mkii.Splash");
+			Intent intent = new Intent(Intent.ACTION_MAIN).setClassName(Act.this, "com.skettidev.pipdroid.Splash");
 			intent.addCategory(Intent.CATEGORY_HOME);
 			intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			startActivity(intent);
