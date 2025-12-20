@@ -20,17 +20,11 @@ public class VarVault {
 
 	// SPECIAL stats
 
-	protected static Stat strength = new Stat(), perception = new Stat(),
-			endurance = new Stat(), charisma = new Stat(),
-			intelligence = new Stat(), agility = new Stat(), luck = new Stat();
+	protected static Stat strength = new Stat(), perception = new Stat(), endurance = new Stat(), charisma = new Stat(), intelligence = new Stat(), agility = new Stat(), luck = new Stat();
 	protected static ArrayList<Stat> SPECIAL_STAT_VALUES = new ArrayList<Stat>();
 	
 	// Skill stats
-	protected static Stat barter = new Stat(), big_guns = new Stat(),
-			energy = new Stat(), explosives = new Stat(),
-			lockpick = new Stat(), medicine = new Stat(), melee = new Stat(),
-			repair = new Stat(), science = new Stat(), small_guns = new Stat(),
-			sneak = new Stat(), speech = new Stat(), unarmed = new Stat();
+	protected static Stat barter = new Stat(), big_guns = new Stat(), energy = new Stat(), explosives = new Stat(), lockpick = new Stat(), medicine = new Stat(), melee = new Stat(), repair = new Stat(), science = new Stat(), small_guns = new Stat(), sneak = new Stat(), speech = new Stat(), unarmed = new Stat();
 	protected static ArrayList<Stat> SKILL_STAT_VALUES = new ArrayList<Stat>();
 	
 	// Three main buttons
@@ -47,8 +41,7 @@ public class VarVault {
 
 	// Bottom bar content
 	protected static TextView status, special, skills, perks, general;
-	protected static LinearLayout statusLL, specialLL, skillsLL, perksLL,
-			generalLL;
+	protected static LinearLayout statusLL, specialLL, skillsLL, perksLL, generalLL;
 	protected static ArrayList<View> BOTTOM_BAR_STATS = new ArrayList<View>();
 
 	protected static TextView weapons, apparel, aid, misc, ammo;
@@ -58,15 +51,10 @@ public class VarVault {
 	// Sub-menus
 	protected static TextView stimpak, cnd, rad, flashlight;
 
-	protected static TextView str, strSTAT, per, perSTAT, end, endSTAT, chr,
-			chrSTAT, intel, intelSTAT, agi, agiSTAT, luk, lukSTAT;
+	protected static TextView str, strSTAT, per, perSTAT, end, endSTAT, chr, chrSTAT, intel, intelSTAT, agi, agiSTAT, luk, lukSTAT;
 	protected static ArrayList<TextView> SUBMENU_SPECIAL = new ArrayList<TextView>();
 
-	protected static TextView bart, barterSTAT, bgns, big_gunsSTAT, nrg,
-			energySTAT, expl, explosivesSTAT, lock, lockpickSTAT, medi,
-			medicineSTAT, mlee, meleeSTAT, rpar, repairSTAT, sci, scienceSTAT,
-			sgns, small_gunsSTAT, snek, sneakSTAT, spch, speechSTAT, uarm,
-			unarmedSTAT;
+	protected static TextView bart, barterSTAT, bgns, big_gunsSTAT, nrg, energySTAT, expl, explosivesSTAT, lock, lockpickSTAT, medi, medicineSTAT, mlee, meleeSTAT, rpar, repairSTAT, sci, scienceSTAT, sgns, small_gunsSTAT, snek, sneakSTAT, spch, speechSTAT, uarm, unarmedSTAT;
 	protected static ArrayList<TextView> SUBMENU_SKILLS = new ArrayList<TextView>();
 
 	// Items
@@ -76,7 +64,7 @@ public class VarVault {
 	// Images
 	protected static ImageView specialImage, skillImage;
 
-	public static Fragment map; // type must be GoogleMap
+	public static Fragment mMap; // type must be GoogleMap
 
 	protected static Typeface font;
 

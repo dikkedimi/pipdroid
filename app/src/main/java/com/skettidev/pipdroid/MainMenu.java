@@ -2,6 +2,7 @@ package com.skettidev.pipdroid;
 
 import java.io.IOException;
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.provider.ContactsContract;
@@ -42,7 +43,7 @@ import android.location.Location;
 
 public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, SurfaceHolder.Callback, View.OnClickListener, View.OnLongClickListener {
 	//private vars
-	private GoogleMap mMap;
+	private GoogleMap mMap; //refactor to fragment?
 	private final ActivityResultLauncher<String> requestPermissionLauncher =
 			registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
 				if (isGranted) {
@@ -357,8 +358,8 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		ViewGroup bottomBar = (ViewGroup) findViewById(R.id.bottom_bar);
 		LayoutInflater inf = this.getLayoutInflater();
 
-		VarVault.map = getSupportFragmentManager().findFragmentById(R.id.mapFragment);
-		//map.setEnabled(true);
+		VarVault.mMap = getSupportFragmentManager().findFragmentById(R.id.mapFragment);
+		enableLocation();
 
 		midPanel.removeAllViews();
 		topBar.removeAllViews();
@@ -1136,17 +1137,11 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		// TODO Auto-generated method stub
 		return false;
 	}
-///  New code!
-///
-//	private GoogleMap mMap;
 
-//	private FusedLocationProviderClient fusedLocationClient;
-
-
-
+	@SuppressLint("MissingPermission")
 	@Override
-	public void onMapReady(GoogleMap googleMap) {
-		mMap = googleMap;
+	public void onMapReady(GoogleMap mMap) {
+
 
 		// Check if location permission is granted
 		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -1160,6 +1155,13 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 	// Enable location on the map if permission is granted
 	private void enableLocation() {
 		FusedLocationProviderClient fusedLocationClient= LocationServices.getFusedLocationProviderClient(this);
+		// Check if location permission is granted
+		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+			enableLocation();  // Enable location if permission is granted
+		} else {
+			// Request location permission if not granted
+			requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
+		}
 		// Enable the location layer on the map
 		mMap.setMyLocationEnabled(true);
 
