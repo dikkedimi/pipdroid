@@ -14,7 +14,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.google.android.gms.maps.GoogleMap;
+import androidx.fragment.app.Fragment;
 
 public class VarVault {
 
@@ -76,7 +76,7 @@ public class VarVault {
 	// Images
 	protected static ImageView specialImage, skillImage;
 
-//	public static GoogleMap map; // type must be GoogleMap
+	public static Fragment map; // type must be GoogleMap
 
 	protected static Typeface font;
 
