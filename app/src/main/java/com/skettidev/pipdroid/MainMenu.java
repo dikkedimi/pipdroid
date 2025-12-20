@@ -5,17 +5,17 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.provider.ContactsContract;
+import android.widget.*;
+import com.google.android.gms.maps.SupportMapFragment;
 import android.view.*;
-import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.content.ContextCompat;
-import androidx.fragment.app.Fragment;
+
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
+
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -29,9 +29,6 @@ import android.hardware.Camera.Parameters;
 import android.media.AudioManager;
 import android.util.Log;
 import android.view.ViewGroup.LayoutParams;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import androidx.appcompat.app.AppCompatActivity;
@@ -39,11 +36,15 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
 import android.location.Location;
+import androidx.activity.OnBackPressedCallback;
+
+import static android.app.PendingIntent.getActivity;
 
 
 public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, SurfaceHolder.Callback, View.OnClickListener, View.OnLongClickListener {
 	//private vars
-	private GoogleMap mMap; //refactor to fragment?
+	public static GoogleMap mMap;
+
 	private final ActivityResultLauncher<String> requestPermissionLauncher =
 			registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
 				if (isGranted) {
@@ -61,7 +62,18 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-
+	// init onbackpressed dispatcher
+		getOnBackPressedDispatcher().addCallback(this,
+				new OnBackPressedCallback(true) {
+					@Override
+					public void handleOnBackPressed() {
+						Intent intent = new Intent(Intent.ACTION_MAIN);
+						intent.addCategory(Intent.CATEGORY_HOME);
+						intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+						startActivity(intent);
+					}
+				}
+		);
 		// Init sound
 		HandleSound.initSound(this.getApplicationContext());
 
@@ -353,23 +365,37 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 	}
 
 	private void dataClicked() {
-		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
-		ViewGroup topBar = (ViewGroup) findViewById(R.id.top_bar);
-		ViewGroup bottomBar = (ViewGroup) findViewById(R.id.bottom_bar);
-		LayoutInflater inf = this.getLayoutInflater();
+		ViewGroup midPanel = findViewById(R.id.mid_panel);
+		ViewGroup topBar = findViewById(R.id.top_bar);
+		ViewGroup bottomBar = findViewById(R.id.bottom_bar);
+		LayoutInflater inflater = getLayoutInflater();
 
-		VarVault.mMap = getSupportFragmentManager().findFragmentById(R.id.mapFragment);
-		enableLocation();
-
+		// Clear old views
 		midPanel.removeAllViews();
 		topBar.removeAllViews();
 		bottomBar.removeAllViews();
 
-		// Main screen turn on
-		inf.inflate(R.layout.map_screen, midPanel);
-		inf.inflate(R.layout.items_bar_top, topBar);
-		inf.inflate(R.layout.items_bar_bottom, bottomBar);
+		// Inflate new layouts
+		inflater.inflate(R.layout.map_screen, midPanel);
+		inflater.inflate(R.layout.items_bar_top, topBar);
+		inflater.inflate(R.layout.items_bar_bottom, bottomBar);
+
+		// Now find the map container inside the newly inflated layout
+		View mapScreenView = inflater.inflate(R.layout.map_screen, midPanel, true);
+		FrameLayout mapContainer = mapScreenView.findViewById(R.id.map_container);
+
+
+		// Create the map fragment programmatically
+		SupportMapFragment mapFragment = SupportMapFragment.newInstance();
+		getSupportFragmentManager()
+				.beginTransaction()
+				.replace(mapContainer.getId(), mapFragment)
+				.commit();
+
+		// Initialize the map asynchronously
+		mapFragment.getMapAsync(this);
 	}
+
 	private void statusClicked() {
 
 		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
@@ -688,16 +714,33 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		}
 
 	}
-	@Override
-	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		if ((keyCode == KeyEvent.KEYCODE_BACK)) {
-			Intent intent = new Intent(Intent.ACTION_MAIN);
-			intent.addCategory(Intent.CATEGORY_HOME);
-			intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-			startActivity(intent);
-		}
-		return super.onKeyDown(keyCode, event);
-	}
+//	@Override
+//	public boolean onKeyDown(int keyCode, KeyEvent event) {
+//		//new block
+//		getOnBackPressedDispatcher().addCallback(this,
+//				new OnBackPressedCallback(true) {
+//					@Override
+//					public void handleOnBackPressed() {
+//						// your back button logic here
+//						Intent intent = new Intent(Intent.ACTION_MAIN);
+//						intent.addCategory(Intent.CATEGORY_HOME);
+//						intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//						startActivity(intent);
+//						return super.onKeyDown(keyCode, event);
+//					}
+//
+//				}
+//			);
+
+		//old block
+//		if ((keyCode == KeyEvent.KEYCODE_BACK)) {
+//			Intent intent = new Intent(Intent.ACTION_MAIN);
+//			intent.addCategory(Intent.CATEGORY_HOME);
+//			intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//			startActivity(intent);
+//		}
+//		return super.onKeyDown(keyCode, event);
+//	}
 	@Override
 	protected void onActivityResult ( int requestCode, int resultCode, Intent data){
 		super.onActivityResult(requestCode, resultCode, data);
@@ -1150,45 +1193,98 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 			// Request location permission if not granted
 			requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
 		}
+		VarVault.mMap = mMap;;
+		enableLocation();
 	}
-
-	// Enable location on the map if permission is granted
 	private void enableLocation() {
-		FusedLocationProviderClient fusedLocationClient= LocationServices.getFusedLocationProviderClient(this);
-		// Check if location permission is granted
-		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-			enableLocation();  // Enable location if permission is granted
-		} else {
-			// Request location permission if not granted
-			requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
-		}
-		// Enable the location layer on the map
-		mMap.setMyLocationEnabled(true);
+		FusedLocationProviderClient fusedLocationClient =
+				LocationServices.getFusedLocationProviderClient(this);
 
-		// Get the current location of the device
+		// Permission check
+		if (ContextCompat.checkSelfPermission(this,
+				Manifest.permission.ACCESS_FINE_LOCATION)
+				!= PackageManager.PERMISSION_GRANTED) {
+
+			requestPermissionLauncher.launch(
+					Manifest.permission.ACCESS_FINE_LOCATION);
+			return;
+		}
+
+		// Map must be ready
+		if (mMap == null) {
+			return;
+		}
+
+		// Enable location layer
+		try {
+			mMap.setMyLocationEnabled(true);
+			mMap.getUiSettings().setMyLocationButtonEnabled(true);
+		} catch (SecurityException e) {
+			// Safety net
+			return;
+		}
+
+		// Get last known location
 		fusedLocationClient.getLastLocation()
-				.addOnSuccessListener(this, new OnSuccessListener<Location>() {
-					@Override
-					public void onSuccess(Location location) {
-						if (location != null) {
-							// Get the current location as a LatLng object
-							LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-
-							// Add a marker at the current location
-							mMap.addMarker(new MarkerOptions().position(currentLocation).title("You are here"));
-
-							// Move the camera to the current location with zoom
-							mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15)); // Zoom level 15
-						} else {
-							Toast.makeText(MainMenu.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
-						}
+				.addOnSuccessListener(this, location -> {
+					if (location == null) {
+						Toast.makeText(MainMenu.this,
+								"Unable to get current location",
+								Toast.LENGTH_SHORT).show();
+						return;
 					}
+
+					LatLng currentLocation =
+							new LatLng(location.getLatitude(),
+									location.getLongitude());
+
+					mMap.clear();
+					mMap.addMarker(new MarkerOptions()
+							.position(currentLocation)
+							.title("You are here"));
+
+					mMap.moveCamera(
+							CameraUpdateFactory.newLatLngZoom(
+									currentLocation, 15));
 				});
-		if (mMap != null) {
-			mMap.setMyLocationEnabled(true); // Enable location on the map
-			mMap.getUiSettings().setMyLocationButtonEnabled(true); // Enable the location button
-		}
 	}
+	// Enable location on the map if permission is granted
+//	private void enableLocation() {
+//		FusedLocationProviderClient fusedLocationClient= LocationServices.getFusedLocationProviderClient(this);
+//		// Check if location permission is granted
+//		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+//			enableLocation();  // Enable location if permission is granted
+//		} else {
+//			// Request location permission if not granted
+//			requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
+//		}
+//		// Enable the location layer on the map
+////		mMap.setMyLocationEnabled(true);
+//
+//		// Get the current location of the device
+//		fusedLocationClient.getLastLocation()
+//				.addOnSuccessListener(this, new OnSuccessListener<Location>() {
+//					@Override
+//					public void onSuccess(Location location) {
+//						if (location != null) {
+//							// Get the current location as a LatLng object
+//							LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
+//
+//							// Add a marker at the current location
+//							mMap.addMarker(new MarkerOptions().position(currentLocation).title("You are here"));
+//
+//							// Move the camera to the current location with zoom
+//							mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15)); // Zoom level 15
+//						} else {
+//							Toast.makeText(MainMenu.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
+//						}
+//					}
+//				});
+//		if (mMap != null) {
+//			mMap.setMyLocationEnabled(true); // Enable location on the map
+//			mMap.getUiSettings().setMyLocationButtonEnabled(true); // Enable the location button
+//		}
+//	}
 //	private final ActivityResultLauncher<String> requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
 //		if (isGranted) {
 //			enableLocation();  // Enable location if permission is granted

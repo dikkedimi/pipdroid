@@ -1,19 +1,14 @@
-<?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/map_screen_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".MapScreenActivity">
+    android:layout_height="match_parent">
 
-    <!-- Google Maps Fragment -->
-    <fragment
-        android:id="@+id/mapFragment"
-        android:name="com.google.android.gms.maps.SupportMapFragment"
+    <!-- Map container for programmatically added fragment -->
+    <FrameLayout
+        android:id="@+id/map_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- Optional: overlay buttons, UI, or labels -->
+    <!-- Optional overlay UI -->
     <Button
         android:id="@+id/btnBack"
         android:layout_width="wrap_content"

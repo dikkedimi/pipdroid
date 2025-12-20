@@ -13,11 +13,12 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
+import com.google.android.gms.maps.GoogleMap;
 import androidx.fragment.app.Fragment;
 
 public class VarVault {
-
+// init maps
+	public static GoogleMap mMap;
 	// SPECIAL stats
 
 	protected static Stat strength = new Stat(), perception = new Stat(), endurance = new Stat(), charisma = new Stat(), intelligence = new Stat(), agility = new Stat(), luck = new Stat();
@@ -64,7 +65,7 @@ public class VarVault {
 	// Images
 	protected static ImageView specialImage, skillImage;
 
-	public static Fragment mMap; // type must be GoogleMap
+//	public static Fragment mMap; // type must be GoogleMap
 
 	protected static Typeface font;
 
