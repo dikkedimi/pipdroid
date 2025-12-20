@@ -40,8 +40,6 @@ dependencies {
     implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.activity:activity:1.7.2")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.gms:play-services-location:21.2.0")
     implementation(libs.appcompat)
     implementation(libs.material)
     testImplementation(libs.junit)

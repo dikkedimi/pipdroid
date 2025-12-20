@@ -50,20 +50,21 @@ public class Splash extends AppCompatActivity implements View.OnClickListener  {
 		if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
 				!= PackageManager.PERMISSION_GRANTED) {
 			ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_CONTACTS}, 1);
-			return;
-		}
-		// Check if location permission is granted
-		if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-				!= PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-				!= PackageManager.PERMISSION_GRANTED) {
-			// Request permissions if not granted
-			ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-			return;
-		}
-		if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-				!= PackageManager.PERMISSION_GRANTED) {
-			// If permission is not granted, request it
-			ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 1);
+			// check if camera permission is granted
+			if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+					!= PackageManager.PERMISSION_GRANTED) {
+				// If permission is not granted, request it
+				ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 1);
+				// Check if location permission is granted (doesn't work well here)
+				if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+						!= PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+						!= PackageManager.PERMISSION_GRANTED) {
+					// Request permissions if not granted
+					ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+					return;
+				}
+
+			}
 		}
 
         setContentView(R.layout.splash);
