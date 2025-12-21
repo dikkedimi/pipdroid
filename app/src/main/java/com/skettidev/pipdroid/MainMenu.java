@@ -70,10 +70,6 @@ public class MainMenu extends FragmentActivity implements OnMapReadyCallback, Su
 		rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
 		setContentView(R.layout.main);
 
-		//initialize the mapFragment (it can now be used anywhere in the class)
-		mapFragment = (SupportMapFragment) getSupportFragmentManager()
-				.findFragmentById(R.id.map_fragment); // <- must match XML ID
-
 		// ===== Initialize sound =====
 		HandleSound.initSound(this.getApplicationContext());
 
@@ -105,7 +101,7 @@ public class MainMenu extends FragmentActivity implements OnMapReadyCallback, Su
 		z.setTextColor(Color.argb(100, 255, 225, 0));
 		VarVault.data.setOnClickListener(this);
 
-		// ===== Initialize stats and arrays =====
+		// ===== Initialize main menu functions =====
 		initSkills();
 		initSpecial();
 		InitializeArrays.all();
@@ -132,7 +128,13 @@ public class MainMenu extends FragmentActivity implements OnMapReadyCallback, Su
 
 		// Set the panels for future usage.
 		ViewGroup midPanel = findViewById(R.id.mid_panel);
-		ViewGroup topBar = findViewById(R.id.top_bar);
+		ViewGroup topBar = findViewById(R.id.top_bar);  // Or whichever view you're targeting
+
+		if (topBar != null) {
+			topBar.removeAllViews();  // Proceed with removing all views safely
+		} else {
+			Log.e("onClick", "top_bar is null! Cannot remove views.");
+		}
 		ViewGroup bottomBar = findViewById(R.id.bottom_bar);
 
 		// Sort the source
@@ -245,21 +247,57 @@ public class MainMenu extends FragmentActivity implements OnMapReadyCallback, Su
 		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
 		ViewGroup topBar = (ViewGroup) findViewById(R.id.top_bar);
 		ViewGroup bottomBar = (ViewGroup) findViewById(R.id.bottom_bar);
+
+		// Check if midPanel is null
+		if (midPanel == null) {
+			Log.e("StatsClicked", "midPanel is null! Cannot remove views.");
+		} else {
+			midPanel.removeAllViews();  // Proceed with removing all views safely
+		}
+
+		// Check if topBar is null
+		if (topBar != null) {
+			topBar.removeAllViews();  // Proceed with removing all views safely
+		} else {
+			Log.e("StatsClicked", "top_bar is null! Cannot remove views.");
+		}
+
+		// Check if bottomBar is null
+		if (bottomBar != null) {
+			bottomBar.removeAllViews();  // Proceed with removing all views safely
+		} else {
+			Log.e("StatsClicked", "bottom_bar is null! Cannot remove views.");
+		}
+
 		LayoutInflater inf = this.getLayoutInflater();
 
-		midPanel.removeAllViews();
-		topBar.removeAllViews();
-		bottomBar.removeAllViews();
+		// Inflate new layouts
+		if (midPanel != null) {
+			inf.inflate(R.layout.status_screen, midPanel);
+		} else {
+			Log.e("StatsClicked", "midPanel is still null after check! Cannot inflate status_screen.");
+		}
 
-		// Main screen turn on
-		inf.inflate(R.layout.status_screen, midPanel);
-		inf.inflate(R.layout.stats_bar_top, topBar);
-		inf.inflate(R.layout.stats_bar_bottom, bottomBar);
+		if (topBar != null) {
+			inf.inflate(R.layout.stats_bar_top, topBar);
+		} else {
+			Log.e("StatsClicked", "topBar is still null after check! Cannot inflate stats_bar_top.");
+		}
+
+		if (bottomBar != null) {
+			inf.inflate(R.layout.stats_bar_bottom, bottomBar);
+		} else {
+			Log.e("StatsClicked", "bottomBar is still null after check! Cannot inflate stats_bar_bottom.");
+		}
 
 		// Format top bar text
 		VarVault.title = (TextView) findViewById(R.id.title_stats);
-		VarVault.title.setText("STATUS");
-		VarVault.title.setTypeface(VarVault.font);
+		if (VarVault.title != null) {
+			VarVault.title.setText("STATUS");
+			VarVault.title.setTypeface(VarVault.font);
+		} else {
+			Log.e("StatsClicked", "title_stats is null! Cannot set title text.");
+		}
 
 		VarVault.hp = (TextView) findViewById(R.id.hp_stats);
 		VarVault.hp.setTypeface(VarVault.font);
@@ -275,7 +313,10 @@ public class MainMenu extends FragmentActivity implements OnMapReadyCallback, Su
 		// Button-ize the buttons
 		VarVault.status = (TextView) findViewById(R.id.btn_status);
 		VarVault.statusLL = (LinearLayout) findViewById(R.id.btn_status_box);
-		VarVault.status.setTypeface(VarVault.font);
+		if (VarVault.status != null) {
+			VarVault.status.setTypeface(VarVault.font);
+		}
+//		VarVault.status.setTypeface(VarVault.font);
 		VarVault.statusLL.setOnClickListener(this);
 
 		VarVault.special = (TextView) findViewById(R.id.btn_special);
@@ -306,6 +347,11 @@ public class MainMenu extends FragmentActivity implements OnMapReadyCallback, Su
 		// Clear crap
 		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
 		ViewGroup topBar = (ViewGroup) findViewById(R.id.top_bar);
+		if (topBar != null) {
+			topBar.removeAllViews();  // Proceed with removing all views safely
+		} else {
+			Log.e("itemsClicked", "top_bar is null! Cannot remove views.");
+		}
 		ViewGroup bottomBar = (ViewGroup) findViewById(R.id.bottom_bar);
 		LayoutInflater inf = this.getLayoutInflater();
 
@@ -393,83 +439,168 @@ public class MainMenu extends FragmentActivity implements OnMapReadyCallback, Su
 	}
 
 	private void dataClicked() {
-		// Clear existing views
-		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
-		ViewGroup topBar = (ViewGroup) findViewById(R.id.top_bar);
-		ViewGroup bottomBar = (ViewGroup) findViewById(R.id.bottom_bar);
+		// Step 1: Set the layout to map_screen.xml once (only once per activity)
+		setContentView(R.layout.main);  // This should be called once, when the activity is initialized.
+// ===== Initialize buttons =====
+		VarVault.stats = findViewById(R.id.left_stats);
+		TextView x = findViewById(R.id.left_button_stats);
+		x.setTypeface(VarVault.font);
+		x.setTextColor(Color.argb(100, 255, 225, 0));
+		VarVault.stats.setOnClickListener(this);
 
-		if (midPanel != null) {
-			midPanel.removeAllViews();
-		}
+		VarVault.items = findViewById(R.id.left_items);
+		TextView y = findViewById(R.id.left_button_items);
+		y.setTypeface(VarVault.font);
+		y.setTextColor(Color.argb(100, 255, 225, 0));
+		VarVault.items.setOnClickListener(this);
+
+		VarVault.data = findViewById(R.id.left_data);
+		TextView z = findViewById(R.id.left_button_data);
+		z.setTypeface(VarVault.font);
+		z.setTextColor(Color.argb(100, 255, 225, 0));
+		VarVault.data.setOnClickListener(this);
+		// Step 2: Find and clear the views for top, bottom, and mid panels
+		ViewGroup topBar = findViewById(R.id.top_bar);
 		if (topBar != null) {
-			topBar.removeAllViews();
+			topBar.removeAllViews();  // Proceed with removing all views safely
+		} else {
+			Log.e("dataClicked", "top_bar is null! Cannot remove views.");
 		}
+		ViewGroup bottomBar = findViewById(R.id.bottom_panel);
+
+		// Step 5: Inflate top and bottom bars dynamically
+		// Dynamically inflate the top bar based on some condition
+		if (topBar != null) {
+			LayoutInflater inflater = getLayoutInflater();
+			inflater.inflate(R.layout.data_bar_top, topBar, true);  // Inflate top bar layout
+		}
+
+		// Dynamically inflate the bottom bar based on some condition
 		if (bottomBar != null) {
-			bottomBar.removeAllViews();
+			LayoutInflater inflater = getLayoutInflater();
+			inflater.inflate(R.layout.data_bar_bottom, bottomBar, true);  // Inflate bottom bar layout
 		}
 
-		// Inflate top and bottom bars
-		LayoutInflater inflater = this.getLayoutInflater();
-		inflater.inflate(R.layout.data_bar_top, topBar, true);
-		inflater.inflate(R.layout.data_bar_bottom, bottomBar, true);
-		//map panel
-		inflater.inflate(R.layout.map_screen, midPanel, true);
+		// Step 4: Handle Map Fragment - make sure the container exists before replacing the fragment
+		ViewGroup mapFragmentContainer = findViewById(R.id.map_fragment_container);  // This is the container for the map
+		if (mapFragmentContainer == null) {
+			Log.e("MainMenu", "map_fragment_container not found in the layout.");
+			return;  // Exit if the container is missing
+		}
 
-		// Check if the map fragment is already added
+		// For STATS button
+		TextView statsButton = findViewById(R.id.left_button_stats);
+		if (statsButton != null) {
+			statsButton.setTypeface(VarVault.font);  // Reapply the font
+			statsButton.setTextColor(Color.argb(100, 255, 225, 0));  // Ensure the text color is correct
+		}
+
+		// For ITEMS button
+		TextView itemsButton = findViewById(R.id.left_button_items);
+		if (itemsButton != null) {
+			itemsButton.setTypeface(VarVault.font);  // Reapply the font
+			itemsButton.setTextColor(Color.argb(100, 255, 225, 0));  // Ensure the text color is correct
+		}
+
+		// For DATA button
+		TextView dataButton = findViewById(R.id.left_button_data);
+		if (dataButton != null) {
+			dataButton.setTypeface(VarVault.font);  // Reapply the font
+			dataButton.setTextColor(Color.argb(100, 255, 225, 0));  // Ensure the text color is correct
+		}
+
 		SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-				.findFragmentById(R.id.map_fragment);
+				.findFragmentById(R.id.map_fragment_container);  // Find map fragment by ID
 
 		if (mapFragment == null) {
-			//if Map fragment not found,  create and add it
+			// If the map fragment is not found, create and add it
 			mapFragment = SupportMapFragment.newInstance();
 			FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
 
-			// if there's an existing fragment in the container, remove it
+			// Remove existing fragment, if any
 			Fragment existingFragment = getSupportFragmentManager().findFragmentByTag("MAP_FRAGMENT_TAG");
 			if (existingFragment != null) {
 				transaction.remove(existingFragment);
 			}
 
-			transaction.replace(R.id.map_fragment_container, mapFragment);
+			// Add the new map fragment
+			transaction.replace(R.id.map_fragment_container, mapFragment, "MAP_FRAGMENT_TAG");
 			transaction.commit();
-
 		} else {
-			// Map fragment already exists, just update it
+			// If the map fragment already exists, just update it
 			mapFragment.getMapAsync(this);
 		}
 
+		// Step 4: Check permissions and enable location if necessary
+		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+			enableLocation();  // Enable location if permission is granted
+		}
 
-		// Button-ize the bottom bar buttons
+
+
+		// Step 6: Additional logic like button handling or other UI updates can go here
+		// For instance, you might want to make buttons interactive, etc.
+
+
+	// Button-ize the bottom bar buttons
 		VarVault.localMap = bottomBar.findViewById(R.id.btn_localmap);
 		VarVault.localMapLL = bottomBar.findViewById(R.id.btn_localmap_box);
-		VarVault.localMap.setTypeface(VarVault.font);
-		VarVault.localMapLL.setOnClickListener(this);
+		if (VarVault.localMap != null) {
+			VarVault.localMap.setTypeface(VarVault.font);
+		}
+		if (VarVault.localMapLL != null) {
+			VarVault.localMapLL.setOnClickListener(this);
+		}
 
 		VarVault.worldMap = bottomBar.findViewById(R.id.btn_worldmap);
 		VarVault.worldMapLL = bottomBar.findViewById(R.id.btn_worldmap_box);
-		VarVault.worldMap.setTypeface(VarVault.font);
-		VarVault.worldMapLL.setOnClickListener(this);
+		if (VarVault.worldMap != null) {
+			VarVault.worldMap.setTypeface(VarVault.font);
+		}
+		if (VarVault.worldMapLL != null) {
+			VarVault.worldMapLL.setOnClickListener(this);
+		}
 
 		VarVault.quests = bottomBar.findViewById(R.id.btn_quests);
 		VarVault.questsLL = bottomBar.findViewById(R.id.btn_quests_box);
-		VarVault.quests.setTypeface(VarVault.font);
-		VarVault.questsLL.setOnClickListener(this);
+		if (VarVault.quests != null) {
+			VarVault.quests.setTypeface(VarVault.font);
+		}
+		if (VarVault.questsLL != null) {
+			VarVault.questsLL.setOnClickListener(this);
+		}
 
 		VarVault.notes = bottomBar.findViewById(R.id.btn_notes);
 		VarVault.notesLL = bottomBar.findViewById(R.id.btn_notes_box);
-		VarVault.notes.setTypeface(VarVault.font);
-		VarVault.notesLL.setOnClickListener(this);
+		if (VarVault.notes != null) {
+			VarVault.notes.setTypeface(VarVault.font);
+		}
+		if (VarVault.notesLL != null) {
+			VarVault.notesLL.setOnClickListener(this);
+		}
 
 		VarVault.radio = bottomBar.findViewById(R.id.btn_radio);
 		VarVault.radioLL = bottomBar.findViewById(R.id.btn_radio_box);
-		VarVault.radio.setTypeface(VarVault.font);
-		VarVault.radioLL.setOnClickListener(this);
+		if (VarVault.radio != null) {
+			VarVault.radio.setTypeface(VarVault.font);
+		}
+		if (VarVault.radioLL != null) {
+			VarVault.radioLL.setOnClickListener(this);
+		}
 	}
 
 
 	private void statusClicked() {
+//		setContentView(R.layout.main);
+		ViewGroup midPanel = findViewById(R.id.mid_panel);
+		ViewGroup bottomBar = findViewById(R.id.bottom_bar);
+		ViewGroup mapFragmentContainer = findViewById(R.id.map_fragment_container);  // Make sure this ID is correct!
 
-		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
+		if (midPanel == null || bottomBar == null || mapFragmentContainer == null) {
+			Log.e("MainMenu", "One or more views are null!");
+			return; // Prevent further actions on null views
+		}
+
 		LayoutInflater inf = this.getLayoutInflater();
 
 		midPanel.removeAllViews();
@@ -840,15 +971,17 @@ public class MainMenu extends FragmentActivity implements OnMapReadyCallback, Su
 		sensorManager.registerListener(sensorEventListener, rotationSensor, SensorManager.SENSOR_DELAY_UI);
 		this.setVolumeControlStream(AudioManager.STREAM_MUSIC);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+		// Check if the map fragment is already added
 
-		// Recheck permissions on activity resume
-		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-			enableLocation();  // Enable location if permission is granted
-		}
 
 		// Clear crap
 		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
 		ViewGroup topBar = (ViewGroup) findViewById(R.id.top_bar);
+		if (topBar != null) {
+			topBar.removeAllViews();  // Proceed with removing all views safely
+		} else {
+			Log.e("onResume", "top_bar is null! Cannot remove views.");
+		}
 		ViewGroup bottomBar = (ViewGroup) findViewById(R.id.bottom_bar);
 		LayoutInflater inf = this.getLayoutInflater();
 
@@ -1231,80 +1364,75 @@ public class MainMenu extends FragmentActivity implements OnMapReadyCallback, Su
 
 	@SuppressLint("MissingPermission")
 	@Override
-	public void onMapReady(GoogleMap googlemap) {
-		mMap = googlemap;
-		// ===== Map visuals =====
-		mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-		mMap.getUiSettings().setMapToolbarEnabled(false);
-		mMap.setBuildingsEnabled(false);
-		// Enable gestures
-		mMap.getUiSettings().setRotateGesturesEnabled(false);  // Allow map rotation
-		mMap.getUiSettings().setTiltGesturesEnabled(false);    // Allow tilt
+	public void onMapReady(GoogleMap googleMap) {
+		mMap = googleMap;
 
-		// Enable compass
-		mMap.getUiSettings().setCompassEnabled(true);        // Show compass when map is rotated
+		// Apply map style
+		applyMapStyle();
 
-		// Optional: other UI settings
-		mMap.getUiSettings().setZoomControlsEnabled(false);
-		mMap.getUiSettings().setMyLocationButtonEnabled(false);
-		// Set initial camera position with rotation and tilt
+		// Configure map visuals
+		configureMapSettings();
+
+		// Set initial camera position to current location if available
+		setInitialCameraPosition();
+
+		// Store map for later use
+		VarVault.mMap = mMap;
+
+		// Enable location if permission granted
 		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-			FusedLocationProviderClient fusedLocationClient =
-					LocationServices.getFusedLocationProviderClient(this);
+			mMap.setMyLocationEnabled(true);
+			mMap.getUiSettings().setMyLocationButtonEnabled(false);  // Optional: Disable My Location button if needed
+		} else {
+			requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
+		}
+	}
 
+	private void applyMapStyle() {
+		try {
+			boolean success = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style));
+			if (!success) {
+				Log.e("Map Styling", "Style parsing failed.");
+			} else {
+				Log.d("MapStyling", "Map style applied successfully.");
+			}
+		} catch (Resources.NotFoundException e) {
+			Log.e("Map Styling", "Can't find style. Error: ", e);
+		}
+	}
+
+	private void configureMapSettings() {
+		// Set map type and UI settings
+		mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+		mMap.getUiSettings().setMapToolbarEnabled(false);  // Disable map toolbar
+		mMap.setBuildingsEnabled(false);  // Disable 3D buildings
+
+		// Enable gestures
+		mMap.getUiSettings().setRotateGesturesEnabled(false);  // Disable rotation
+		mMap.getUiSettings().setTiltGesturesEnabled(false);    // Disable tilt gestures
+
+		// Enable compass and disable zoom controls
+		mMap.getUiSettings().setCompassEnabled(true);
+		mMap.getUiSettings().setZoomControlsEnabled(false);
+	}
+
+	private void setInitialCameraPosition() {
+		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+			FusedLocationProviderClient fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 			fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
 				if (location != null) {
 					LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-
 					CameraPosition position = new CameraPosition.Builder()
 							.target(currentLocation)
 							.zoom(15)
 							.bearing(0)
 							.tilt(0)
 							.build();
-
 					mMap.animateCamera(CameraUpdateFactory.newCameraPosition(position));
 					VarVault.playerLocation = currentLocation;
 				}
 			});
 		}
-		try {
-			MapStyleOptions style = MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style);
-			boolean success = mMap.setMapStyle(style);
-			Log.d("MapStyle", "JSON Map style applied: " + success);
-		} catch (Resources.NotFoundException e) {
-			Log.e("MapStyle", "Style JSON not found!", e);
-		}
-
-		// ===== Location permissions =====
-		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-				== PackageManager.PERMISSION_GRANTED) {
-			mMap.setMyLocationEnabled(true);
-			mMap.getUiSettings().setMyLocationButtonEnabled(false);
-
-			// Get last known location safely
-			FusedLocationProviderClient fusedLocationClient =
-					LocationServices.getFusedLocationProviderClient(this);
-
-//			fusedLocationClient.getLastLocation()
-//					.addOnSuccessListener(location -> {
-//						if (location != null) {
-//							LatLng playerLatLng = new LatLng(
-//									location.getLatitude(),
-//									location.getLongitude()
-//							);
-//							VarVault.playerLocation = playerLatLng;
-//						}
-//					});
-
-		} else {
-			requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
-		}
-
-		// Store map for later use
-		VarVault.mMap = mMap;
-		// Now the map is ready, you can enable location safely
-		enableLocation();
 	}
 
 	private void enableLocation() {
@@ -1370,7 +1498,7 @@ public class MainMenu extends FragmentActivity implements OnMapReadyCallback, Su
 		if (requestCode == 1) {
 			if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 				// Permission granted, initialize the map again
-				onMapReady(mMap);
+//				onMapReady(mMap);
 			} else {
 				Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
 			}

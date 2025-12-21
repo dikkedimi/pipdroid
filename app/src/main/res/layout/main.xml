@@ -1,201 +1,198 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Frame -->
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:baselineAligned="false"
-    android:orientation="horizontal" >
-    
+    tools:context=".MainMenu">
+
+    <!-- Invisible SurfaceView (still needed) -->
     <SurfaceView
         android:id="@+id/PREVIEW"
-        android:layout_width="1dip"
-        android:layout_height="1dip"
-		android:layout_alignParentLeft="true"
-		android:layout_alignParentBottom="true"/>
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
-    <!-- left button bar -->
-    <ImageView xmlns:android="http://schemas.android.com/apk/res/android"
-	    android:layout_width="80dip"
-	    android:layout_height="fill_parent"
-	    android:layout_alignParentLeft="true"
-	    android:scaleType="fitXY"
-	    
-	    android:src="@drawable/left_panel" />
+    <!-- Left menu panel -->
+    <ImageView
+        android:layout_width="80dp"
+        android:layout_height="match_parent"
+        android:scaleType="fitXY"
+        android:src="@drawable/left_panel"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <LinearLayout
         android:id="@+id/left_panel"
-        android:layout_width="80dip"
-        android:layout_height="fill_parent"
-        android:layout_alignParentLeft="true"
-        android:gravity="center"
+        android:layout_width="80dp"
+        android:layout_height="match_parent"
         android:orientation="vertical"
+        android:gravity="center"
         android:weightSum="0.9"
-        android:paddingTop="10dip"
-        android:paddingBottom="10dip">
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
-        <!-- Buttons (Each are in a Linear Layout -->
-        <!-- TODO: add @strings title for each one -->
-
+        <!-- Buttons -->
         <LinearLayout
-            android:layout_width="fill_parent"
-            android:layout_height="0dip"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
             android:layout_weight="0.3"
-            android:gravity="center"
-            android:orientation="vertical">
-            
+            android:orientation="vertical"
+            android:gravity="center">
             <TextView
                 android:id="@+id/left_button_stats"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="STATS"
                 android:textColor="#fee300"
-                android:textSize="21dip" />
-
+                android:textSize="21dp" />
             <ImageView
                 android:id="@+id/left_stats"
-                android:layout_marginLeft="5dip"
-                android:layout_marginRight="5dip"
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="5dp"
+                android:layout_marginEnd="5dp"
                 android:src="@drawable/button" />
         </LinearLayout>
 
         <LinearLayout
-            android:layout_width="fill_parent"
-            android:layout_height="0dip"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
             android:layout_weight="0.3"
-            android:gravity="center"
-            android:orientation="vertical" >
-            
+            android:orientation="vertical"
+            android:gravity="center">
             <TextView
                 android:id="@+id/left_button_items"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="ITEMS"
                 android:textColor="#fee300"
-                android:textSize="21dip" />
-
+                android:textSize="21dp" />
             <ImageView
                 android:id="@+id/left_items"
-                android:layout_marginLeft="5dip"
-                android:layout_marginRight="5dip"
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="5dp"
+                android:layout_marginEnd="5dp"
                 android:src="@drawable/button" />
         </LinearLayout>
 
         <LinearLayout
-            android:layout_width="fill_parent"
-            android:layout_height="0dip"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
             android:layout_weight="0.3"
-            android:gravity="center"
-            android:orientation="vertical" >
-            
+            android:orientation="vertical"
+            android:gravity="center">
             <TextView
                 android:id="@+id/left_button_data"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="DATA"
                 android:textColor="#fee300"
-                android:textSize="21dip" />
-
+                android:textSize="21dp" />
             <ImageView
                 android:id="@+id/left_data"
-                android:layout_marginLeft="5dip"
-                android:layout_marginRight="5dip"
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="5dp"
+                android:layout_marginEnd="5dp"
                 android:src="@drawable/button" />
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Entire pane to the right of the buttons -->
+    <!-- Right panel (top bar, map, bottom bar) -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/right_panel"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        app:layout_constraintStart_toEndOf="@id/left_panel"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
 
-    <RelativeLayout
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:layout_toRightOf="@+id/left_panel"
-        android:background="@drawable/bg_repeat"
-        android:orientation="vertical" >
-
+        <!-- Top bar -->
         <RelativeLayout
-            android:id="@+id/top_panel"
-            android:layout_width="fill_parent"
-            android:layout_height="50dip"
-            android:layout_alignParentTop="true" android:gravity="bottom">
-        
+            android:id="@+id/top_bar"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
             <ImageView
                 android:id="@+id/top_left"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
-                android:layout_marginLeft="10dip"
+                android:layout_alignParentStart="true"
+                android:layout_marginStart="10dp"
                 android:src="@drawable/top_left" />
 
             <ImageView
                 android:id="@+id/top_right"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
-                android:layout_marginRight="10dip"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="10dp"
                 android:src="@drawable/top_right" />
-
-            <LinearLayout
-                android:id="@+id/top_bar"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_toLeftOf="@+id/top_right"
-                android:layout_toRightOf="@+id/top_left"
-                android:background="@drawable/top_bar"
-                android:orientation="vertical" >
-            </LinearLayout>
-            
         </RelativeLayout>
 
+        <!-- Mid panel container (map) -->
         <RelativeLayout
-            android:id="@+id/bottom_panel"
-            android:layout_width="fill_parent"
-            android:layout_height="50dip"
-            android:layout_alignParentBottom="true" >
+            android:id="@+id/mid_panel"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            app:layout_constraintTop_toBottomOf="@id/top_bar"
+            app:layout_constraintBottom_toTopOf="@id/bottom_bar"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
+            <!-- Map container -->
+            <FrameLayout
+                android:id="@+id/map_fragment_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </RelativeLayout>
+
+        <!-- Bottom bar (container) -->
+        <RelativeLayout
+            android:id="@+id/bottom_bar"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <!-- Content of bottom_bar (like buttons or icons) -->
             <ImageView
                 android:id="@+id/bottom_left"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
-                android:layout_marginLeft="10dip"
+                android:layout_alignParentStart="true"
+                android:layout_marginStart="10dp"
                 android:src="@drawable/bottom_left" />
 
             <ImageView
                 android:id="@+id/bottom_right"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
-                android:layout_marginRight="10dip"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="10dp"
                 android:src="@drawable/bottom_right" />
-
-            <LinearLayout
-                android:id="@+id/bottom_bar"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_toLeftOf="@+id/bottom_right"
-                android:layout_toRightOf="@+id/bottom_left"
-                android:background="@drawable/bottom_bar"
-                android:gravity="bottom|center"
-                android:orientation="horizontal" >
-            </LinearLayout>
-
         </RelativeLayout>
 
-        <LinearLayout
-            android:id="@+id/mid_panel"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:layout_above="@+id/bottom_panel"
-            android:layout_below="@+id/top_panel"
-            android:orientation="horizontal" >
-            
-        </LinearLayout>
-    </RelativeLayout>
+        <!-- Bottom panel (content holder) -->
+        <RelativeLayout
+            android:id="@+id/bottom_panel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@id/bottom_bar">
+            <!-- Additional content for bottom panel goes here -->
+        </RelativeLayout>
 
-</RelativeLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
