@@ -23,8 +23,8 @@ import android.widget.*;
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentActivity;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.*;
@@ -32,11 +32,7 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.MarkerOptions;
-import androidx.fragment.app.FragmentActivity;
-import android.os.Bundle;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
+
 import java.io.IOException;
 
 
@@ -395,6 +391,24 @@ public class MainMenu extends FragmentActivity implements OnMapReadyCallback, Su
 		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
 		ViewGroup topBar = (ViewGroup) findViewById(R.id.top_bar);
 		ViewGroup bottomBar = (ViewGroup) findViewById(R.id.bottom_bar);
+
+		if (midPanel != null) {
+			midPanel.removeAllViews();
+		} else {
+			Log.e("MyApp", "midPanel is null!");
+		}
+
+		if (topBar != null) {
+			topBar.removeAllViews();
+		} else {
+			Log.e("MyApp", "topBar is null!");
+		}
+
+		if (bottomBar != null) {
+			bottomBar.removeAllViews();
+		} else {
+			Log.e("MyApp", "bottomBar is null!");
+		}
 		LayoutInflater inf = this.getLayoutInflater();
 
 		midPanel.removeAllViews();
