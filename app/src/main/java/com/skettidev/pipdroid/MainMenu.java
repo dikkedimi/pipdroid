@@ -19,12 +19,16 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.*;
 import android.view.ViewGroup.LayoutParams;
-import android.widget.*;
-import androidx.activity.OnBackPressedCallback;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentTransaction;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.*;
@@ -41,6 +45,7 @@ public class MainMenu extends FragmentActivity implements OnMapReadyCallback, Su
 
 	//private vars
 	public static GoogleMap mMap;
+	private SupportMapFragment mapFragment;
 	private SensorManager sensorManager;
 	private Sensor rotationSensor;
 	private float[] rotationMatrix = new float[9];
@@ -64,24 +69,10 @@ public class MainMenu extends FragmentActivity implements OnMapReadyCallback, Su
 		sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 		rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
 		setContentView(R.layout.main);
-		SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-				.findFragmentById(R.id.map_fragment); // <- must match XML ID
-		if (mapFragment != null) {
-			mapFragment.getMapAsync(this);
-		}
 
-		// ===== OnBackPressed dispatcher =====
-		getOnBackPressedDispatcher().addCallback(this,
-				new OnBackPressedCallback(true) {
-					@Override
-					public void handleOnBackPressed() {
-						Intent intent = new Intent(Intent.ACTION_MAIN);
-						intent.addCategory(Intent.CATEGORY_HOME);
-						intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-						startActivity(intent);
-					}
-				}
-		);
+		//initialize the mapFragment (it can now be used anywhere in the class)
+		mapFragment = (SupportMapFragment) getSupportFragmentManager()
+				.findFragmentById(R.id.map_fragment); // <- must match XML ID
 
 		// ===== Initialize sound =====
 		HandleSound.initSound(this.getApplicationContext());
@@ -195,6 +186,21 @@ public class MainMenu extends FragmentActivity implements OnMapReadyCallback, Su
 			topBar.removeAllViews();
 			midPanel.removeAllViews();
 			bottomBar.removeAllViews();
+		}
+		if (source == VarVault.localMapLL) {
+			// Local map button clicked, set zoom level to LOCAL_MAP_ZOOM
+			if (mMap != null) {
+				LatLng localLocation = new LatLng(37.7749, -122.4194); // Example location, replace with actual location
+				mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(localLocation, LOCAL_MAP_ZOOM));
+				Log.d("MapZoom", "Local Map zoom level set to: " + LOCAL_MAP_ZOOM);
+			}
+		} else if (source == VarVault.worldMapLL) {
+			// World map button clicked, set zoom level to WORLD_MAP_ZOOM
+			if (mMap != null) {
+				LatLng worldLocation = new LatLng(0, 0); // Global view (example)
+				mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(worldLocation, WORLD_MAP_ZOOM));
+				Log.d("MapZoom", "World Map zoom level set to: " + WORLD_MAP_ZOOM);
+			}
 		}
 	}
 
@@ -387,54 +393,50 @@ public class MainMenu extends FragmentActivity implements OnMapReadyCallback, Su
 	}
 
 	private void dataClicked() {
-		//clear crap
+		// Clear existing views
 		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
 		ViewGroup topBar = (ViewGroup) findViewById(R.id.top_bar);
 		ViewGroup bottomBar = (ViewGroup) findViewById(R.id.bottom_bar);
 
 		if (midPanel != null) {
 			midPanel.removeAllViews();
-		} else {
-			Log.e("MyApp", "midPanel is null!");
 		}
-
 		if (topBar != null) {
 			topBar.removeAllViews();
-		} else {
-			Log.e("MyApp", "topBar is null!");
 		}
-
 		if (bottomBar != null) {
 			bottomBar.removeAllViews();
-		} else {
-			Log.e("MyApp", "bottomBar is null!");
 		}
-		LayoutInflater inf = this.getLayoutInflater();
 
-		midPanel.removeAllViews();
-		topBar.removeAllViews();
-		bottomBar.removeAllViews();
-
-		//main screen on
 		// Inflate top and bottom bars
-		inf.inflate(R.layout.data_bar_top, topBar, true);
-		inf.inflate(R.layout.data_bar_bottom, bottomBar, true);
-		// Inflate map_screen once
-		View mapScreenView = inf.inflate(R.layout.map_screen, midPanel, true);
-		FrameLayout mapContainer = mapScreenView.findViewById(R.id.map_container);
+		LayoutInflater inflater = this.getLayoutInflater();
+		inflater.inflate(R.layout.data_bar_top, topBar, true);
+		inflater.inflate(R.layout.data_bar_bottom, bottomBar, true);
+		//map panel
+		inflater.inflate(R.layout.map_screen, midPanel, true);
 
-//		ViewGroup midPanel = findViewById(R.id.mid_panel);
-//		ViewGroup topBar = findViewById(R.id.top_bar);
-//		ViewGroup bottomBar = findViewById(R.id.bottom_bar);
-
-		// get the map asynchronously
+		// Check if the map fragment is already added
 		SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
 				.findFragmentById(R.id.map_fragment);
-		mapFragment.getMapAsync(this);
 
-		// Ensure fragment is attached before requesting the map
-		getSupportFragmentManager().executePendingTransactions();
-		mapFragment.getMapAsync(this);
+		if (mapFragment == null) {
+			//if Map fragment not found,  create and add it
+			mapFragment = SupportMapFragment.newInstance();
+			FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+
+			// if there's an existing fragment in the container, remove it
+			Fragment existingFragment = getSupportFragmentManager().findFragmentByTag("MAP_FRAGMENT_TAG");
+			if (existingFragment != null) {
+				transaction.remove(existingFragment);
+			}
+
+			transaction.replace(R.id.map_fragment_container, mapFragment);
+			transaction.commit();
+
+		} else {
+			// Map fragment already exists, just update it
+			mapFragment.getMapAsync(this);
+		}
 
 
 		// Button-ize the bottom bar buttons
@@ -1246,9 +1248,7 @@ public class MainMenu extends FragmentActivity implements OnMapReadyCallback, Su
 		mMap.getUiSettings().setZoomControlsEnabled(false);
 		mMap.getUiSettings().setMyLocationButtonEnabled(false);
 		// Set initial camera position with rotation and tilt
-		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-				== PackageManager.PERMISSION_GRANTED) {
-
+		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 			FusedLocationProviderClient fusedLocationClient =
 					LocationServices.getFusedLocationProviderClient(this);
 
@@ -1280,22 +1280,22 @@ public class MainMenu extends FragmentActivity implements OnMapReadyCallback, Su
 		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
 				== PackageManager.PERMISSION_GRANTED) {
 			mMap.setMyLocationEnabled(true);
-			mMap.getUiSettings().setMyLocationButtonEnabled(true);
+			mMap.getUiSettings().setMyLocationButtonEnabled(false);
 
 			// Get last known location safely
 			FusedLocationProviderClient fusedLocationClient =
 					LocationServices.getFusedLocationProviderClient(this);
 
-			fusedLocationClient.getLastLocation()
-					.addOnSuccessListener(location -> {
-						if (location != null) {
-							LatLng playerLatLng = new LatLng(
-									location.getLatitude(),
-									location.getLongitude()
-							);
-							VarVault.playerLocation = playerLatLng;
-						}
-					});
+//			fusedLocationClient.getLastLocation()
+//					.addOnSuccessListener(location -> {
+//						if (location != null) {
+//							LatLng playerLatLng = new LatLng(
+//									location.getLatitude(),
+//									location.getLongitude()
+//							);
+//							VarVault.playerLocation = playerLatLng;
+//						}
+//					});
 
 		} else {
 			requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
@@ -1375,50 +1375,84 @@ public class MainMenu extends FragmentActivity implements OnMapReadyCallback, Su
 				Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
 			}
 		}
+		if (requestCode == 1) {
+			if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+				// Permission granted, proceed with accessing contacts
+//				accessContacts();
+			} else {
+				// Permission denied, show a message to the user
+				Toast.makeText(this, "Permission denied to read contacts", Toast.LENGTH_SHORT).show();
+			}
+		}
 	}
 
 	private void moveCamera(LatLng target, float zoom) {
 		if (VarVault.mMap == null || target == null) return;
 
 		CameraUpdate update = CameraUpdateFactory.newLatLngZoom(target, zoom);
-		VarVault.mMap.animateCamera(update, 600, null); // smooth CRT-style move
+		VarVault.mMap.animateCamera(update, 600, null);
 	}
 
 	private void showWorldMap() {
-		GoogleMap map = VarVault.mMap;
-		LatLng player = VarVault.playerLocation;
-
-		if (map == null) return;
-		if (player == null) {
-			Log.w("Map", "Player location not ready yet");
+		if (VarVault.mMap == null || VarVault.playerLocation == null) {
+			Log.w("Map", "Player location or map is not ready.");
 			return;
 		}
+		// Check if the location permission is granted
+		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+				== PackageManager.PERMISSION_GRANTED) {
+			// Permission granted, enable location
+			enableLocation();
+		} else {
+			// Permission not granted, request it
+			requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
+		}
+		// Ensure my location button is enabled
+		VarVault.mMap.setMyLocationEnabled(true);
 
-		CameraUpdate update = CameraUpdateFactory.newLatLngZoom(player, WORLD_MAP_ZOOM);
-
-		// Animate safely with duration + callback
-		map.animateCamera(update, 600, new GoogleMap.CancelableCallback() {
-			@Override
-			public void onFinish() {
-			}
-
-			@Override
-			public void onCancel() {
-			}
-		});
-	}
-
-	private void showLocalMap() {
-		if (VarVault.mMap == null || VarVault.playerLocation == null) return;
-
+		// Set the camera update with zoom and animate the movement
 		VarVault.mMap.animateCamera(
-				CameraUpdateFactory.newLatLngZoom(
-						VarVault.playerLocation,
-						LOCAL_MAP_ZOOM
-				),
+				CameraUpdateFactory.newLatLngZoom(VarVault.playerLocation, WORLD_MAP_ZOOM),
 				600,
 				null
 		);
+
+		// Optional: Log position when the camera has stopped moving
+		VarVault.mMap.setOnCameraIdleListener(() -> {
+			LatLng cameraPosition = VarVault.mMap.getCameraPosition().target;
+			Log.d("Map", "Camera position is: " + cameraPosition);
+		});
+
+	}
+	private void showLocalMap() {
+		if (VarVault.mMap == null || VarVault.playerLocation == null) {
+			Log.w("Map", "Player location or map is not ready.");
+			return;
+		}
+		// Check if the location permission is granted
+		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+				== PackageManager.PERMISSION_GRANTED) {
+			// Permission granted, enable location
+			enableLocation();
+		} else {
+			// Permission not granted, request it
+			requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
+		}
+		// Ensure my location button is enabled
+		VarVault.mMap.setMyLocationEnabled(true);
+
+		// Set the camera update with zoom and animate the movement
+		VarVault.mMap.animateCamera(
+				CameraUpdateFactory.newLatLngZoom(VarVault.playerLocation, LOCAL_MAP_ZOOM),
+				600,
+				null
+		);
+
+		// Optional: Log position when the camera has stopped moving
+		VarVault.mMap.setOnCameraIdleListener(() -> {
+			LatLng cameraPosition = VarVault.mMap.getCameraPosition().target;
+			Log.d("Map", "Camera position is: " + cameraPosition);
+		});
 	}
 
 	private final SensorEventListener sensorEventListener = new SensorEventListener() {
