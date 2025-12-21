@@ -12,7 +12,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.hardware.Camera;
+import android.hardware.*;
 import android.hardware.Camera.Parameters;
 import android.media.AudioManager;
 import android.os.Bundle;
@@ -28,19 +28,27 @@ import androidx.core.content.ContextCompat;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.*;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.MarkerOptions;
-
+import androidx.fragment.app.FragmentActivity;
+import android.os.Bundle;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
 import java.io.IOException;
 
 
-public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, SurfaceHolder.Callback, View.OnClickListener, View.OnLongClickListener {
+public class MainMenu extends FragmentActivity implements OnMapReadyCallback, SurfaceHolder.Callback, View.OnClickListener, View.OnLongClickListener {
 
 
 	//private vars
 	public static GoogleMap mMap;
-
+	private SensorManager sensorManager;
+	private Sensor rotationSensor;
+	private float[] rotationMatrix = new float[9];
+	private float[] orientation = new float[3];
 	private final ActivityResultLauncher<String> requestPermissionLauncher =
 			registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
 				if (isGranted) {
@@ -49,18 +57,22 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 					Toast.makeText(MainMenu.this, "Permission denied", Toast.LENGTH_SHORT).show();
 				}
 			});
-//	FusedLocationProviderClient fusedLocationClient= LocationServices.getFusedLocationProviderClient(this);
 
 	// ########################
 	// ## On app start ########
 	// ########################
-//	@Override
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+		rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
 		setContentView(R.layout.main);
-
-
+		SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+				.findFragmentById(R.id.map_fragment); // <- must match XML ID
+		if (mapFragment != null) {
+			mapFragment.getMapAsync(this);
+		}
 
 		// ===== OnBackPressed dispatcher =====
 		getOnBackPressedDispatcher().addCallback(this,
@@ -401,12 +413,10 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 //		ViewGroup topBar = findViewById(R.id.top_bar);
 //		ViewGroup bottomBar = findViewById(R.id.bottom_bar);
 
-		// Create the map fragment programmatically
-		SupportMapFragment mapFragment = SupportMapFragment.newInstance();
-		getSupportFragmentManager()
-				.beginTransaction()
-				.replace(mapContainer.getId(), mapFragment)
-				.commit();
+		// get the map asynchronously
+		SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+				.findFragmentById(R.id.map_fragment);
+		mapFragment.getMapAsync(this);
 
 		// Ensure fragment is attached before requesting the map
 		getSupportFragmentManager().executePendingTransactions();
@@ -650,7 +660,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		}
 	}
 
-	private void skillStatClicked (View source){
+	private void skillStatClicked(View source) {
 
 		if (source == VarVault.bart || source == VarVault.barterSTAT)
 			VarVault.skillImage.setImageResource(R.drawable.barter);
@@ -680,7 +690,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 			VarVault.skillImage.setImageResource(R.drawable.unarmed);
 	}
 
-	private void specialStatClicked (View source){
+	private void specialStatClicked(View source) {
 		if (source == VarVault.str)
 			VarVault.specialImage.setImageResource(R.drawable.strength);
 		else if (source == VarVault.per)
@@ -761,7 +771,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 	}
 
 	@Override
-	protected void onActivityResult ( int requestCode, int resultCode, Intent data){
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
 		if (requestCode == 0 && resultCode == RESULT_OK) {
 			SharedPreferences prefs = getSharedPreferences("SPECIAL", 0);
@@ -805,11 +815,13 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 			VarVault.isCamOn = false;
 		}
 		super.onPause();
+		sensorManager.unregisterListener(sensorEventListener);
 	}
 
 	// onResume()
 	protected void onResume() {
 		super.onResume();
+		sensorManager.registerListener(sensorEventListener, rotationSensor, SensorManager.SENSOR_DELAY_UI);
 		this.setVolumeControlStream(AudioManager.STREAM_MUSIC);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -913,11 +925,11 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		super.onDestroy();
 	}
 
-	public void surfaceChanged (SurfaceHolder holder,int format, int width,
-								int height){
+	public void surfaceChanged(SurfaceHolder holder, int format, int width,
+							   int height) {
 	}
 
-	public void surfaceCreated (SurfaceHolder holder){
+	public void surfaceCreated(SurfaceHolder holder) {
 		VarVault.mHolder = holder;
 		try {
 			VarVault.mCamera.setPreviewDisplay(VarVault.mHolder);
@@ -926,7 +938,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		}
 	}
 
-	public void surfaceDestroyed (SurfaceHolder holder){
+	public void surfaceDestroyed(SurfaceHolder holder) {
 		VarVault.mCamera.stopPreview();
 		VarVault.mHolder = null;
 	}
@@ -1022,8 +1034,8 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 	}
 
 	public boolean onLongClick(View source) {
-        boolean result = false;
-        // TODO For Items, wear them.
+		boolean result = false;
+		// TODO For Items, wear them.
 		ContentValues values = new ContentValues();
 		ContentValues NOTvalues = new ContentValues();
 
@@ -1044,109 +1056,109 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 			Cursor currentWeapon = db.query("OwnedWeapons", new String[]{dbHelper.colName, dbHelper.colIsWearing}, "WeaponName='" + clipped + "'", null, null, null, "_id");
 
 			if (currentWeapon.moveToFirst() != false) {
-                int isWearing = currentWeapon.getInt(1);
-                Log.d("DB", "...got the info!");
-                if (isWearing == 1) {
-                    values.put(dbHelper.colIsWearing, 0);
-                    NOTvalues.put(dbHelper.colIsWearing, 0);
-                } else {
-                    values.put(dbHelper.colIsWearing, 1);
-                    NOTvalues.put(dbHelper.colIsWearing, 0);
-                }
-                Log.d("DB", "Trying to update equip...");
-                db.update("OwnedWeapons", values, dbHelper.colName + "='" + clipped + "'", null);
-                db.update("OwnedWeapons", NOTvalues, dbHelper.colName + "<>'" + clipped + "'", null);
-                Log.d("DB", "...updated equipped status!");
-                Cursor allWeapons = db.query("OwnedWeapons", new String[]{dbHelper.colName, dbHelper.colIsWearing}, null, null, null, null, "_id");
-                allWeapons.moveToFirst();
-                for (int i = 0; !allWeapons.isAfterLast(); i++) {
+				int isWearing = currentWeapon.getInt(1);
+				Log.d("DB", "...got the info!");
+				if (isWearing == 1) {
+					values.put(dbHelper.colIsWearing, 0);
+					NOTvalues.put(dbHelper.colIsWearing, 0);
+				} else {
+					values.put(dbHelper.colIsWearing, 1);
+					NOTvalues.put(dbHelper.colIsWearing, 0);
+				}
+				Log.d("DB", "Trying to update equip...");
+				db.update("OwnedWeapons", values, dbHelper.colName + "='" + clipped + "'", null);
+				db.update("OwnedWeapons", NOTvalues, dbHelper.colName + "<>'" + clipped + "'", null);
+				Log.d("DB", "...updated equipped status!");
+				Cursor allWeapons = db.query("OwnedWeapons", new String[]{dbHelper.colName, dbHelper.colIsWearing}, null, null, null, null, "_id");
+				allWeapons.moveToFirst();
+				for (int i = 0; !allWeapons.isAfterLast(); i++) {
 
-                    String temp = allWeapons.getString(0);
-                    int ruWear = allWeapons.getInt(1);
+					String temp = allWeapons.getString(0);
+					int ruWear = allWeapons.getInt(1);
 
-                    if (ruWear == 1)
-                        VarVault.Weapons.get(i).setText("\u25a0 " + temp);
-                    else
-                        VarVault.Weapons.get(i).setText("  " + temp);
+					if (ruWear == 1)
+						VarVault.Weapons.get(i).setText("\u25a0 " + temp);
+					else
+						VarVault.Weapons.get(i).setText("  " + temp);
 
-                    allWeapons.moveToNext();
-                }
-                updateWG();
-                result = true;
-            }
-
-
-        } else if (VarVault.Apparel.contains(source)) {
-            dbHelper database = new dbHelper(MainMenu.this);
-
-            Log.d("DB", "Getting a writable database...");
-            SQLiteDatabase db = database.getWritableDatabase();
-            Log.d("DB", "...writable database gotten!");
-
-            Log.d("DB", "Querying DB's current status...");
-
-            String clipped = (String) VarVault.Apparel.get(VarVault.Apparel.indexOf(source)).getText();
-            clipped = clipped.replace('\u25a0', ' ');
-            clipped = clipped.replaceAll("^\\s+", "");
+					allWeapons.moveToNext();
+				}
+				updateWG();
+				result = true;
+			}
 
 
-            Cursor currentApparel = db.query("OwnedApparel", new String[]{dbHelper.colName, dbHelper.colType, dbHelper.colIsWearing}, "WeaponName='" + clipped + "'", null, null, null, "_id");
+		} else if (VarVault.Apparel.contains(source)) {
+			dbHelper database = new dbHelper(MainMenu.this);
 
-            if (currentApparel.moveToFirst() != false) {
-                int type = currentApparel.getInt(1);
-                int isWearing = currentApparel.getInt(2);
-                Log.d("DB", "...got the info!");
-                if (isWearing == 1) {
-                    values.put(dbHelper.colIsWearing, 0);
-                    NOTvalues.put(dbHelper.colIsWearing, 0);
-                } else {
-                    values.put(dbHelper.colIsWearing, 1);
-                    NOTvalues.put(dbHelper.colIsWearing, 0);
-                }
-                Log.d("DB", "Trying to update wear...");// Update wear based on type
-                switch (type) {
+			Log.d("DB", "Getting a writable database...");
+			SQLiteDatabase db = database.getWritableDatabase();
+			Log.d("DB", "...writable database gotten!");
 
-                    case 1:
-                        db.update("OwnedApparel", values, dbHelper.colName + "='" + clipped + "' AND " + dbHelper.colType + "=" + 1, null);
-                        db.update("OwnedApparel", NOTvalues, dbHelper.colName + "<>'" + clipped + "' AND (" + dbHelper.colType + "=" + 1 + " OR " + dbHelper.colType + "=" + 3 + ")", null);
-                        break;
-                    case 2:
-                        db.update("OwnedApparel", values, dbHelper.colName + "='" + clipped + "' AND " + dbHelper.colType + "=" + 2, null);
-                        db.update("OwnedApparel", NOTvalues, dbHelper.colName + "<>'" + clipped + "' AND (" + dbHelper.colType + "=" + 2 + " OR " + dbHelper.colType + "=" + 3 + ")", null);
-                        break;
-                    case 3:
-                        db.update("OwnedApparel", values, dbHelper.colName + "='" + clipped + "' AND " + dbHelper.colType + "=" + 3, null);
-                        db.update("OwnedApparel", NOTvalues, dbHelper.colName + "<>'" + clipped + "' AND (" + dbHelper.colType + "=" + 1 + " OR " + dbHelper.colType + "=" + 2 + " OR " + dbHelper.colType + "=" + 3 + ")", null);
-                        break;
-                    case 4:
-                        db.update("OwnedApparel", values, dbHelper.colName + "='" + clipped + "' AND " + dbHelper.colType + "=" + 4, null);
-                        db.update("OwnedApparel", NOTvalues, dbHelper.colName + "<>'" + clipped + "' AND " + dbHelper.colType + "=" + 4, null);
-                        break;
-                }
-                Log.d("DB", "...updated wear status!");
-                Cursor allApparel = db.query("OwnedApparel", new String[]{dbHelper.colName, dbHelper.colIsWearing}, null, null, null, null, "_id");
-                allApparel.moveToFirst();
-                for (int i = 0; !allApparel.isAfterLast(); i++) {
+			Log.d("DB", "Querying DB's current status...");
 
-                    String temp = allApparel.getString(0);
-                    int ruWear = allApparel.getInt(1);
-
-                    if (ruWear == 1)
-                        VarVault.Apparel.get(i).setText("\u25a0 " + temp);
-                    else
-                        VarVault.Apparel.get(i).setText("  " + temp);
-
-                    allApparel.moveToNext();
-                }
-                updateWG();
-                result = true;
-            }
+			String clipped = (String) VarVault.Apparel.get(VarVault.Apparel.indexOf(source)).getText();
+			clipped = clipped.replace('\u25a0', ' ');
+			clipped = clipped.replaceAll("^\\s+", "");
 
 
-        }
+			Cursor currentApparel = db.query("OwnedApparel", new String[]{dbHelper.colName, dbHelper.colType, dbHelper.colIsWearing}, "WeaponName='" + clipped + "'", null, null, null, "_id");
 
-        return result;
-    }
+			if (currentApparel.moveToFirst() != false) {
+				int type = currentApparel.getInt(1);
+				int isWearing = currentApparel.getInt(2);
+				Log.d("DB", "...got the info!");
+				if (isWearing == 1) {
+					values.put(dbHelper.colIsWearing, 0);
+					NOTvalues.put(dbHelper.colIsWearing, 0);
+				} else {
+					values.put(dbHelper.colIsWearing, 1);
+					NOTvalues.put(dbHelper.colIsWearing, 0);
+				}
+				Log.d("DB", "Trying to update wear...");// Update wear based on type
+				switch (type) {
+
+					case 1:
+						db.update("OwnedApparel", values, dbHelper.colName + "='" + clipped + "' AND " + dbHelper.colType + "=" + 1, null);
+						db.update("OwnedApparel", NOTvalues, dbHelper.colName + "<>'" + clipped + "' AND (" + dbHelper.colType + "=" + 1 + " OR " + dbHelper.colType + "=" + 3 + ")", null);
+						break;
+					case 2:
+						db.update("OwnedApparel", values, dbHelper.colName + "='" + clipped + "' AND " + dbHelper.colType + "=" + 2, null);
+						db.update("OwnedApparel", NOTvalues, dbHelper.colName + "<>'" + clipped + "' AND (" + dbHelper.colType + "=" + 2 + " OR " + dbHelper.colType + "=" + 3 + ")", null);
+						break;
+					case 3:
+						db.update("OwnedApparel", values, dbHelper.colName + "='" + clipped + "' AND " + dbHelper.colType + "=" + 3, null);
+						db.update("OwnedApparel", NOTvalues, dbHelper.colName + "<>'" + clipped + "' AND (" + dbHelper.colType + "=" + 1 + " OR " + dbHelper.colType + "=" + 2 + " OR " + dbHelper.colType + "=" + 3 + ")", null);
+						break;
+					case 4:
+						db.update("OwnedApparel", values, dbHelper.colName + "='" + clipped + "' AND " + dbHelper.colType + "=" + 4, null);
+						db.update("OwnedApparel", NOTvalues, dbHelper.colName + "<>'" + clipped + "' AND " + dbHelper.colType + "=" + 4, null);
+						break;
+				}
+				Log.d("DB", "...updated wear status!");
+				Cursor allApparel = db.query("OwnedApparel", new String[]{dbHelper.colName, dbHelper.colIsWearing}, null, null, null, null, "_id");
+				allApparel.moveToFirst();
+				for (int i = 0; !allApparel.isAfterLast(); i++) {
+
+					String temp = allApparel.getString(0);
+					int ruWear = allApparel.getInt(1);
+
+					if (ruWear == 1)
+						VarVault.Apparel.get(i).setText("\u25a0 " + temp);
+					else
+						VarVault.Apparel.get(i).setText("  " + temp);
+
+					allApparel.moveToNext();
+				}
+				updateWG();
+				result = true;
+			}
+
+
+		}
+
+		return result;
+	}
 
 	private void updateWG() {
 
@@ -1195,6 +1207,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 
 		VarVault.caps.setText("Caps: " + VarVault.curCaps.getValue());
 	}
+
 	protected boolean isRouteDisplayed() {
 		// TODO Auto-generated method stub
 		return false;
@@ -1202,13 +1215,45 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 
 	@SuppressLint("MissingPermission")
 	@Override
-	public void onMapReady(GoogleMap mMap) {
-
+	public void onMapReady(GoogleMap googlemap) {
+		mMap = googlemap;
 		// ===== Map visuals =====
 		mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
 		mMap.getUiSettings().setMapToolbarEnabled(false);
 		mMap.setBuildingsEnabled(false);
+		// Enable gestures
+		mMap.getUiSettings().setRotateGesturesEnabled(false);  // Allow map rotation
+		mMap.getUiSettings().setTiltGesturesEnabled(false);    // Allow tilt
 
+		// Enable compass
+		mMap.getUiSettings().setCompassEnabled(true);        // Show compass when map is rotated
+
+		// Optional: other UI settings
+		mMap.getUiSettings().setZoomControlsEnabled(false);
+		mMap.getUiSettings().setMyLocationButtonEnabled(false);
+		// Set initial camera position with rotation and tilt
+		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+				== PackageManager.PERMISSION_GRANTED) {
+
+			FusedLocationProviderClient fusedLocationClient =
+					LocationServices.getFusedLocationProviderClient(this);
+
+			fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
+				if (location != null) {
+					LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
+
+					CameraPosition position = new CameraPosition.Builder()
+							.target(currentLocation)
+							.zoom(15)
+							.bearing(0)
+							.tilt(0)
+							.build();
+
+					mMap.animateCamera(CameraUpdateFactory.newCameraPosition(position));
+					VarVault.playerLocation = currentLocation;
+				}
+			});
+		}
 		try {
 			MapStyleOptions style = MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style);
 			boolean success = mMap.setMapStyle(style);
@@ -1300,10 +1345,12 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 									currentLocation, 15));
 				});
 	}
-	private static final float WORLD_MAP_ZOOM = 11.5f; // city-wide
+
+	private static final float WORLD_MAP_ZOOM = 13.5f; // city-wide
 	private static final float LOCAL_MAP_ZOOM = 16.5f; // nearby streets
+
 	@Override
-	public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults){
+	public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
 		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
 		if (requestCode == 1) {
@@ -1315,12 +1362,14 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 			}
 		}
 	}
+
 	private void moveCamera(LatLng target, float zoom) {
 		if (VarVault.mMap == null || target == null) return;
 
 		CameraUpdate update = CameraUpdateFactory.newLatLngZoom(target, zoom);
 		VarVault.mMap.animateCamera(update, 600, null); // smooth CRT-style move
 	}
+
 	private void showWorldMap() {
 		GoogleMap map = VarVault.mMap;
 		LatLng player = VarVault.playerLocation;
@@ -1336,11 +1385,15 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		// Animate safely with duration + callback
 		map.animateCamera(update, 600, new GoogleMap.CancelableCallback() {
 			@Override
-			public void onFinish() { }
+			public void onFinish() {
+			}
+
 			@Override
-			public void onCancel() { }
+			public void onCancel() {
+			}
 		});
 	}
+
 	private void showLocalMap() {
 		if (VarVault.mMap == null || VarVault.playerLocation == null) return;
 
@@ -1353,5 +1406,29 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 				null
 		);
 	}
-}
 
+	private final SensorEventListener sensorEventListener = new SensorEventListener() {
+		@Override
+		public void onSensorChanged(SensorEvent event) {
+			if (mMap == null) return;
+
+			SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values);
+			SensorManager.getOrientation(rotationMatrix, orientation);
+			float azimuthInRadians = orientation[0];
+			float azimuthInDegrees = (float) Math.toDegrees(azimuthInRadians);
+			azimuthInDegrees = (azimuthInDegrees + 360) % 360;
+
+			// Update camera bearing to match compass
+			CameraPosition currentPos = mMap.getCameraPosition();
+			CameraPosition camPos = new CameraPosition.Builder(currentPos)
+					.bearing(azimuthInDegrees)
+					.tilt(0)  // keep top-down
+					.build();
+			mMap.moveCamera(CameraUpdateFactory.newCameraPosition(camPos));
+		}
+
+		@Override
+		public void onAccuracyChanged(Sensor sensor, int accuracy) {
+		}
+	};
+}
