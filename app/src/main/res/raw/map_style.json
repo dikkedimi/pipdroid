@@ -1,60 +1,74 @@
 [
   {
-    "featureType": "road",
+    "featureType": "water",
     "elementType": "geometry",
     "stylers": [
-      { "color": "#00FF00" },
-      { "lightness": 50 },
-      { "saturation": 80 }
+      { "color": "#000000" }
     ]
   },
-  {
-    "featureType": "road",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      { "color": "#00AA00" }       // darker green road text
-    ]
-  },
+
   {
     "featureType": "landscape",
     "elementType": "geometry",
     "stylers": [
-      { "color": "#003300" }       // dark green land
+      { "color": "#0A5F0A" }
     ]
   },
-  {
-    "featureType": "poi",
-    "elementType": "geometry",
-    "stylers": [
-      { "color": "#004400" }       // points of interest
-    ]
-  },
-  {
-    "featureType": "transit",
-    "elementType": "geometry",
-    "stylers": [
-      { "color": "#006600" }       // transit lines
-    ]
-  },
-  {
-    "featureType": "water",
-    "elementType": "geometry",
-    "stylers": [
-      { "color": "#002200" }       // dark green water
-    ]
-  },
+
   {
     "featureType": "administrative",
     "elementType": "geometry",
     "stylers": [
-      { "color": "#005500" }       // green borders
+      { "color": "#159415" }
     ]
   },
+
   {
-    "featureType": "building",
+    "featureType": "poi",
     "elementType": "geometry",
     "stylers": [
-      { "color": "#006600" }       // dim green buildings (footprints)
+      { "color": "#2FB170" }
+    ]
+  },
+
+  {
+    "featureType": "transit",
+    "elementType": "geometry",
+    "stylers": [
+      { "color": "#4BBE4B" }
+    ]
+  },
+
+  {
+    "featureType": "road",
+    "elementType": "geometry",
+    "stylers": [
+      { "color": "#63CB63" },
+      { "lightness": -15 }
+    ]
+  },
+
+  {
+    "featureType": "road",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      { "color": "#7BD87B" }
+    ]
+  },
+
+  {
+    "featureType": "all",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      { "color": "#8FE58F" }
+    ]
+  },
+
+  {
+    "featureType": "all",
+    "elementType": "labels.text.stroke",
+    "stylers": [
+      { "color": "#000000" }
     ]
   }
 ]

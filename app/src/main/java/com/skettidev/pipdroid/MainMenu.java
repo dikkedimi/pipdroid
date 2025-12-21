@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
@@ -19,7 +20,6 @@ import android.util.Log;
 import android.view.*;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.*;
-import android.content.res.Resources;
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -27,10 +27,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.*;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -39,6 +36,8 @@ import java.io.IOException;
 
 
 public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, SurfaceHolder.Callback, View.OnClickListener, View.OnLongClickListener {
+
+
 	//private vars
 	public static GoogleMap mMap;
 
@@ -60,6 +59,8 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
+
+
 
 		// ===== OnBackPressed dispatcher =====
 		getOnBackPressedDispatcher().addCallback(this,
@@ -117,12 +118,12 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		// dataClicked();
 	}
 
-	public void onClick(View source){
+	@Override
+	public void onClick(View source) {
 
 		VarVault.curCaps.setValue(VarVault.curCaps.getValue() + 5);
 
 		// Play a tune, dependent on source.
-
 		if (VarVault.MAIN_BUTTONS.contains(source))
 			HandleSound.playSound(HandleSound.aud_newTab);
 		else if (source == VarVault.stimpak)
@@ -131,9 +132,9 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 			HandleSound.playSound(HandleSound.aud_selection);
 
 		// Set the panels for future usage.
-		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
-		ViewGroup topBar = (ViewGroup) findViewById(R.id.top_bar);
-		ViewGroup bottomBar = (ViewGroup) findViewById(R.id.bottom_bar);
+		ViewGroup midPanel = findViewById(R.id.mid_panel);
+		ViewGroup topBar = findViewById(R.id.top_bar);
+		ViewGroup bottomBar = findViewById(R.id.bottom_bar);
 
 		// Sort the source
 		if (source == VarVault.stats)
@@ -153,7 +154,6 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 			skillStatClicked(source);
 		else if (source == VarVault.flashlight)
 			flashlightClicked();
-
 		else if (source == VarVault.items)
 			itemsClicked();
 		else if (source == VarVault.weaponsLL)
@@ -168,16 +168,28 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 			updateCAPS();
 		} else if (source == VarVault.ammoLL) {
 			updateCAPS();
-		} else if (source == VarVault.data) {
+		} else if (source == VarVault.data)
 			dataClicked();
-		} else {
 
+			// ===== DATA BUTTONS HANDLING =====
+		else if (source == VarVault.localMapLL)
+			showLocalMap();
+		else if (source == VarVault.worldMapLL)
+			showWorldMap();
+		else if (source == VarVault.questsLL)
+			Log.d("Menu", "Quests clicked");
+		else if (source == VarVault.notesLL)
+			Log.d("Menu", "Notes clicked");
+		else if (source == VarVault.radioLL)
+			Log.d("Menu", "Radio clicked");
+
+		else {
 			topBar.removeAllViews();
 			midPanel.removeAllViews();
 			bottomBar.removeAllViews();
 		}
-
 	}
+
 
 	private void flashlightClicked() {
 		if (VarVault.mCamera == null) {
@@ -367,23 +379,27 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 	}
 
 	private void dataClicked() {
-		ViewGroup midPanel = findViewById(R.id.mid_panel);
-		ViewGroup topBar = findViewById(R.id.top_bar);
-		ViewGroup bottomBar = findViewById(R.id.bottom_bar);
-		LayoutInflater inflater = getLayoutInflater();
+		//clear crap
+		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
+		ViewGroup topBar = (ViewGroup) findViewById(R.id.top_bar);
+		ViewGroup bottomBar = (ViewGroup) findViewById(R.id.bottom_bar);
+		LayoutInflater inf = this.getLayoutInflater();
 
-		// Clear old views
 		midPanel.removeAllViews();
 		topBar.removeAllViews();
 		bottomBar.removeAllViews();
 
+		//main screen on
 		// Inflate top and bottom bars
-		inflater.inflate(R.layout.data_bar_top, topBar, true);
-		inflater.inflate(R.layout.data_bar_bottom, bottomBar, true);
-
+		inf.inflate(R.layout.data_bar_top, topBar, true);
+		inf.inflate(R.layout.data_bar_bottom, bottomBar, true);
 		// Inflate map_screen once
-		View mapScreenView = inflater.inflate(R.layout.map_screen, midPanel, true);
+		View mapScreenView = inf.inflate(R.layout.map_screen, midPanel, true);
 		FrameLayout mapContainer = mapScreenView.findViewById(R.id.map_container);
+
+//		ViewGroup midPanel = findViewById(R.id.mid_panel);
+//		ViewGroup topBar = findViewById(R.id.top_bar);
+//		ViewGroup bottomBar = findViewById(R.id.bottom_bar);
 
 		// Create the map fragment programmatically
 		SupportMapFragment mapFragment = SupportMapFragment.newInstance();
@@ -395,6 +411,33 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		// Ensure fragment is attached before requesting the map
 		getSupportFragmentManager().executePendingTransactions();
 		mapFragment.getMapAsync(this);
+
+
+		// Button-ize the bottom bar buttons
+		VarVault.localMap = bottomBar.findViewById(R.id.btn_localmap);
+		VarVault.localMapLL = bottomBar.findViewById(R.id.btn_localmap_box);
+		VarVault.localMap.setTypeface(VarVault.font);
+		VarVault.localMapLL.setOnClickListener(this);
+
+		VarVault.worldMap = bottomBar.findViewById(R.id.btn_worldmap);
+		VarVault.worldMapLL = bottomBar.findViewById(R.id.btn_worldmap_box);
+		VarVault.worldMap.setTypeface(VarVault.font);
+		VarVault.worldMapLL.setOnClickListener(this);
+
+		VarVault.quests = bottomBar.findViewById(R.id.btn_quests);
+		VarVault.questsLL = bottomBar.findViewById(R.id.btn_quests_box);
+		VarVault.quests.setTypeface(VarVault.font);
+		VarVault.questsLL.setOnClickListener(this);
+
+		VarVault.notes = bottomBar.findViewById(R.id.btn_notes);
+		VarVault.notesLL = bottomBar.findViewById(R.id.btn_notes_box);
+		VarVault.notes.setTypeface(VarVault.font);
+		VarVault.notesLL.setOnClickListener(this);
+
+		VarVault.radio = bottomBar.findViewById(R.id.btn_radio);
+		VarVault.radioLL = bottomBar.findViewById(R.id.btn_radio_box);
+		VarVault.radio.setTypeface(VarVault.font);
+		VarVault.radioLL.setOnClickListener(this);
 	}
 
 
@@ -716,50 +759,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		}
 
 	}
-//	@Override
-//	protected void onCreate(Bundle savedInstanceState) {
-//		super.onCreate(savedInstanceState);
-//		setContentView(R.layout.activity_main_menu);
-//
-//		// Example of setting up the dynamic map fragment
-//		FrameLayout mapContainer = findViewById(R.id.map_container);
-//		SupportMapFragment mapFragment = SupportMapFragment.newInstance();
-//		getSupportFragmentManager()
-//				.beginTransaction()
-//				.replace(mapContainer.getId(), mapFragment)
-//				.commit();
-//
-//		getSupportFragmentManager().executePendingTransactions();
-//		mapFragment.getMapAsync(this);
-//	}
 
-//	@Override
-//	public boolean onKeyDown(int keyCode, KeyEvent event) {
-//		//new block
-//		getOnBackPressedDispatcher().addCallback(this,
-//				new OnBackPressedCallback(true) {
-//					@Override
-//					public void handleOnBackPressed() {
-//						// your back button logic here
-//						Intent intent = new Intent(Intent.ACTION_MAIN);
-//						intent.addCategory(Intent.CATEGORY_HOME);
-//						intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//						startActivity(intent);
-//						return super.onKeyDown(keyCode, event);
-//					}
-//
-//				}
-//			);
-
-		//old block
-//		if ((keyCode == KeyEvent.KEYCODE_BACK)) {
-//			Intent intent = new Intent(Intent.ACTION_MAIN);
-//			intent.addCategory(Intent.CATEGORY_HOME);
-//			intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//			startActivity(intent);
-//		}
-//		return super.onKeyDown(keyCode, event);
-//	}
 	@Override
 	protected void onActivityResult ( int requestCode, int resultCode, Intent data){
 		super.onActivityResult(requestCode, resultCode, data);
@@ -1204,35 +1204,50 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 	@Override
 	public void onMapReady(GoogleMap mMap) {
 
-		// ===== 1️⃣ Apply map visuals =====
-		mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);          // Needed for JSON style to work
-		mMap.getUiSettings().setMapToolbarEnabled(false);    // Optional for Pip-Boy style
-		mMap.setBuildingsEnabled(false);                     // Turn off 3D buildings
+		// ===== Map visuals =====
+		mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+		mMap.getUiSettings().setMapToolbarEnabled(false);
+		mMap.setBuildingsEnabled(false);
 
-		// Apply the green Pip-Boy style
 		try {
 			MapStyleOptions style = MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style);
 			boolean success = mMap.setMapStyle(style);
-			Log.d("MapStyle", "Map style applied: " + success);
+			Log.d("MapStyle", "JSON Map style applied: " + success);
 		} catch (Resources.NotFoundException e) {
 			Log.e("MapStyle", "Style JSON not found!", e);
 		}
-		// ===== 2️⃣ Handle location permissions =====
+
+		// ===== Location permissions =====
 		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
 				== PackageManager.PERMISSION_GRANTED) {
-			// Permission granted → enable location features
-			mMap.setMyLocationEnabled(true);                         // Blue dot
-			mMap.getUiSettings().setMyLocationButtonEnabled(true);   // Location button
+			mMap.setMyLocationEnabled(true);
+			mMap.getUiSettings().setMyLocationButtonEnabled(true);
+
+			// Get last known location safely
+			FusedLocationProviderClient fusedLocationClient =
+					LocationServices.getFusedLocationProviderClient(this);
+
+			fusedLocationClient.getLastLocation()
+					.addOnSuccessListener(location -> {
+						if (location != null) {
+							LatLng playerLatLng = new LatLng(
+									location.getLatitude(),
+									location.getLongitude()
+							);
+							VarVault.playerLocation = playerLatLng;
+						}
+					});
+
 		} else {
-			// Permission not granted → request it
 			requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
 		}
 
 		// Store map for later use
 		VarVault.mMap = mMap;
-
-
+		// Now the map is ready, you can enable location safely
+		enableLocation();
 	}
+
 	private void enableLocation() {
 		FusedLocationProviderClient fusedLocationClient =
 				LocationServices.getFusedLocationProviderClient(this);
@@ -1285,50 +1300,8 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 									currentLocation, 15));
 				});
 	}
-	// Enable location on the map if permission is granted
-//	private void enableLocation() {
-//		FusedLocationProviderClient fusedLocationClient= LocationServices.getFusedLocationProviderClient(this);
-//		// Check if location permission is granted
-//		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-//			enableLocation();  // Enable location if permission is granted
-//		} else {
-//			// Request location permission if not granted
-//			requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
-//		}
-//		// Enable the location layer on the map
-////		mMap.setMyLocationEnabled(true);
-//
-//		// Get the current location of the device
-//		fusedLocationClient.getLastLocation()
-//				.addOnSuccessListener(this, new OnSuccessListener<Location>() {
-//					@Override
-//					public void onSuccess(Location location) {
-//						if (location != null) {
-//							// Get the current location as a LatLng object
-//							LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-//
-//							// Add a marker at the current location
-//							mMap.addMarker(new MarkerOptions().position(currentLocation).title("You are here"));
-//
-//							// Move the camera to the current location with zoom
-//							mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15)); // Zoom level 15
-//						} else {
-//							Toast.makeText(MainMenu.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
-//						}
-//					}
-//				});
-//		if (mMap != null) {
-//			mMap.setMyLocationEnabled(true); // Enable location on the map
-//			mMap.getUiSettings().setMyLocationButtonEnabled(true); // Enable the location button
-//		}
-//	}
-//	private final ActivityResultLauncher<String> requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
-//		if (isGranted) {
-//			enableLocation();  // Enable location if permission is granted
-//		} else {
-//			Toast.makeText(MainMenu.this, "Permission denied", Toast.LENGTH_SHORT).show();
-//		}
-//	});
+	private static final float WORLD_MAP_ZOOM = 11.5f; // city-wide
+	private static final float LOCAL_MAP_ZOOM = 16.5f; // nearby streets
 	@Override
 	public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults){
 		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -1342,6 +1315,43 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 			}
 		}
 	}
+	private void moveCamera(LatLng target, float zoom) {
+		if (VarVault.mMap == null || target == null) return;
 
+		CameraUpdate update = CameraUpdateFactory.newLatLngZoom(target, zoom);
+		VarVault.mMap.animateCamera(update, 600, null); // smooth CRT-style move
+	}
+	private void showWorldMap() {
+		GoogleMap map = VarVault.mMap;
+		LatLng player = VarVault.playerLocation;
+
+		if (map == null) return;
+		if (player == null) {
+			Log.w("Map", "Player location not ready yet");
+			return;
+		}
+
+		CameraUpdate update = CameraUpdateFactory.newLatLngZoom(player, WORLD_MAP_ZOOM);
+
+		// Animate safely with duration + callback
+		map.animateCamera(update, 600, new GoogleMap.CancelableCallback() {
+			@Override
+			public void onFinish() { }
+			@Override
+			public void onCancel() { }
+		});
+	}
+	private void showLocalMap() {
+		if (VarVault.mMap == null || VarVault.playerLocation == null) return;
+
+		VarVault.mMap.animateCamera(
+				CameraUpdateFactory.newLatLngZoom(
+						VarVault.playerLocation,
+						LOCAL_MAP_ZOOM
+				),
+				600,
+				null
+		);
+	}
 }
 

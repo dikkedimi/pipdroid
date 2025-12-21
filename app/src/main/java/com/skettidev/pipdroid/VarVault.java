@@ -1,7 +1,5 @@
 package com.skettidev.pipdroid;
 
-import java.util.ArrayList;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -14,11 +12,14 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.google.android.gms.maps.GoogleMap;
-import androidx.fragment.app.Fragment;
+import com.google.android.gms.maps.model.LatLng;
+
+import java.util.ArrayList;
 
 public class VarVault {
 // init maps
 	public static GoogleMap mMap;
+	public static LatLng playerLocation;
 	// SPECIAL stats
 
 	protected static Stat strength = new Stat(), perception = new Stat(), endurance = new Stat(), charisma = new Stat(), intelligence = new Stat(), agility = new Stat(), luck = new Stat();
@@ -45,9 +46,14 @@ public class VarVault {
 	protected static LinearLayout statusLL, specialLL, skillsLL, perksLL, generalLL;
 	protected static ArrayList<View> BOTTOM_BAR_STATS = new ArrayList<View>();
 
+	// items view bottom bar
 	protected static TextView weapons, apparel, aid, misc, ammo;
 	protected static LinearLayout weaponsLL, apparelLL, aidLL, miscLL, ammoLL;
 	protected static ArrayList<View> BOTTOM_BAR_ITEMS = new ArrayList<View>();
+
+	// data view bottom bar
+	protected static TextView localMap, worldMap, quests, notes, radio;
+	protected static LinearLayout localMapLL, worldMapLL, questsLL, notesLL, radioLL;
 
 	// Sub-menus
 	protected static TextView stimpak, cnd, rad, flashlight;
