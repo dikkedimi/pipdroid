@@ -1,25 +1,12 @@
 package com.skettidev.pipdroid;
 
-import java.io.IOException;
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.pm.PackageManager;
-import android.os.Bundle;
-import android.widget.*;
-import com.google.android.gms.maps.SupportMapFragment;
-import android.view.*;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.core.content.ContextCompat;
-
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
@@ -27,18 +14,28 @@ import android.graphics.Typeface;
 import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
 import android.media.AudioManager;
+import android.os.Bundle;
 import android.util.Log;
+import android.view.*;
 import android.view.ViewGroup.LayoutParams;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
+import android.widget.*;
+import android.content.res.Resources;
+import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnSuccessListener;
-import android.location.Location;
-import androidx.activity.OnBackPressedCallback;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MapStyleOptions;
+import com.google.android.gms.maps.model.MarkerOptions;
 
-import static android.app.PendingIntent.getActivity;
+import java.io.IOException;
 
 
 public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, SurfaceHolder.Callback, View.OnClickListener, View.OnLongClickListener {
@@ -59,10 +56,12 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 	// ## On app start ########
 	// ########################
 //	@Override
+	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-	// init onbackpressed dispatcher
+
+		// ===== OnBackPressed dispatcher =====
 		getOnBackPressedDispatcher().addCallback(this,
 				new OnBackPressedCallback(true) {
 					@Override
@@ -74,47 +73,50 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 					}
 				}
 		);
-		// Init sound
+
+		// ===== Initialize sound =====
 		HandleSound.initSound(this.getApplicationContext());
 
+		// ===== Initialize stats / fonts =====
 		VarVault.font = Typeface.createFromAsset(getAssets(), "Monofonto.ttf");
 		VarVault.curWG = new Stat();
 		VarVault.maxWG = new Stat();
 		VarVault.curCaps = new Stat();
 
-		// Set flags and volume buttons
 		this.setVolumeControlStream(AudioManager.STREAM_MUSIC);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-
-		// Initialize the three buttons
-		VarVault.stats = (ImageView) findViewById(R.id.left_stats);
-		TextView x = (TextView) findViewById(R.id.left_button_stats);
+		// ===== Initialize buttons =====
+		VarVault.stats = findViewById(R.id.left_stats);
+		TextView x = findViewById(R.id.left_button_stats);
 		x.setTypeface(VarVault.font);
 		x.setTextColor(Color.argb(100, 255, 225, 0));
 		VarVault.stats.setOnClickListener(this);
 
-		VarVault.items = (ImageView) findViewById(R.id.left_items);
-		TextView y = (TextView) findViewById(R.id.left_button_items);
+		VarVault.items = findViewById(R.id.left_items);
+		TextView y = findViewById(R.id.left_button_items);
 		y.setTypeface(VarVault.font);
 		y.setTextColor(Color.argb(100, 255, 225, 0));
 		VarVault.items.setOnClickListener(this);
 
-		VarVault.data = (ImageView) findViewById(R.id.left_data);
-		TextView z = (TextView) findViewById(R.id.left_button_data);
+		VarVault.data = findViewById(R.id.left_data);
+		TextView z = findViewById(R.id.left_button_data);
 		z.setTypeface(VarVault.font);
 		z.setTextColor(Color.argb(100, 255, 225, 0));
 		VarVault.data.setOnClickListener(this);
 
-		// Get stats and fill arrays
-
+		// ===== Initialize stats and arrays =====
 		initSkills();
 		initSpecial();
 		InitializeArrays.all();
-
 		onClick(VarVault.stats);
 		initCaps();
+
+		// ===== Optional: initialize map immediately =====
+		// If you want the map ready at startup, you can call:
+		// dataClicked();
 	}
+
 	public void onClick(View source){
 
 		VarVault.curCaps.setValue(VarVault.curCaps.getValue() + 5);
@@ -375,15 +377,13 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		topBar.removeAllViews();
 		bottomBar.removeAllViews();
 
-		// Inflate new layouts
-		inflater.inflate(R.layout.map_screen, midPanel);
-		inflater.inflate(R.layout.items_bar_top, topBar);
-		inflater.inflate(R.layout.items_bar_bottom, bottomBar);
+		// Inflate top and bottom bars
+		inflater.inflate(R.layout.data_bar_top, topBar, true);
+		inflater.inflate(R.layout.data_bar_bottom, bottomBar, true);
 
-		// Now find the map container inside the newly inflated layout
+		// Inflate map_screen once
 		View mapScreenView = inflater.inflate(R.layout.map_screen, midPanel, true);
 		FrameLayout mapContainer = mapScreenView.findViewById(R.id.map_container);
-
 
 		// Create the map fragment programmatically
 		SupportMapFragment mapFragment = SupportMapFragment.newInstance();
@@ -392,9 +392,11 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 				.replace(mapContainer.getId(), mapFragment)
 				.commit();
 
-		// Initialize the map asynchronously
+		// Ensure fragment is attached before requesting the map
+		getSupportFragmentManager().executePendingTransactions();
 		mapFragment.getMapAsync(this);
 	}
+
 
 	private void statusClicked() {
 
@@ -714,6 +716,23 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		}
 
 	}
+//	@Override
+//	protected void onCreate(Bundle savedInstanceState) {
+//		super.onCreate(savedInstanceState);
+//		setContentView(R.layout.activity_main_menu);
+//
+//		// Example of setting up the dynamic map fragment
+//		FrameLayout mapContainer = findViewById(R.id.map_container);
+//		SupportMapFragment mapFragment = SupportMapFragment.newInstance();
+//		getSupportFragmentManager()
+//				.beginTransaction()
+//				.replace(mapContainer.getId(), mapFragment)
+//				.commit();
+//
+//		getSupportFragmentManager().executePendingTransactions();
+//		mapFragment.getMapAsync(this);
+//	}
+
 //	@Override
 //	public boolean onKeyDown(int keyCode, KeyEvent event) {
 //		//new block
@@ -1185,16 +1204,34 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 	@Override
 	public void onMapReady(GoogleMap mMap) {
 
+		// ===== 1️⃣ Apply map visuals =====
+		mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);          // Needed for JSON style to work
+		mMap.getUiSettings().setMapToolbarEnabled(false);    // Optional for Pip-Boy style
+		mMap.setBuildingsEnabled(false);                     // Turn off 3D buildings
 
-		// Check if location permission is granted
-		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-			enableLocation();  // Enable location if permission is granted
+		// Apply the green Pip-Boy style
+		try {
+			MapStyleOptions style = MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style);
+			boolean success = mMap.setMapStyle(style);
+			Log.d("MapStyle", "Map style applied: " + success);
+		} catch (Resources.NotFoundException e) {
+			Log.e("MapStyle", "Style JSON not found!", e);
+		}
+		// ===== 2️⃣ Handle location permissions =====
+		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+				== PackageManager.PERMISSION_GRANTED) {
+			// Permission granted → enable location features
+			mMap.setMyLocationEnabled(true);                         // Blue dot
+			mMap.getUiSettings().setMyLocationButtonEnabled(true);   // Location button
 		} else {
-			// Request location permission if not granted
+			// Permission not granted → request it
 			requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
 		}
-		VarVault.mMap = mMap;;
-		enableLocation();
+
+		// Store map for later use
+		VarVault.mMap = mMap;
+
+
 	}
 	private void enableLocation() {
 		FusedLocationProviderClient fusedLocationClient =

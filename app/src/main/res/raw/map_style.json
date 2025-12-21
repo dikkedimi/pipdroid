@@ -1,0 +1,60 @@
+[
+  {
+    "featureType": "road",
+    "elementType": "geometry",
+    "stylers": [
+      { "color": "#00FF00" },
+      { "lightness": 50 },
+      { "saturation": 80 }
+    ]
+  },
+  {
+    "featureType": "road",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      { "color": "#00AA00" }       // darker green road text
+    ]
+  },
+  {
+    "featureType": "landscape",
+    "elementType": "geometry",
+    "stylers": [
+      { "color": "#003300" }       // dark green land
+    ]
+  },
+  {
+    "featureType": "poi",
+    "elementType": "geometry",
+    "stylers": [
+      { "color": "#004400" }       // points of interest
+    ]
+  },
+  {
+    "featureType": "transit",
+    "elementType": "geometry",
+    "stylers": [
+      { "color": "#006600" }       // transit lines
+    ]
+  },
+  {
+    "featureType": "water",
+    "elementType": "geometry",
+    "stylers": [
+      { "color": "#002200" }       // dark green water
+    ]
+  },
+  {
+    "featureType": "administrative",
+    "elementType": "geometry",
+    "stylers": [
+      { "color": "#005500" }       // green borders
+    ]
+  },
+  {
+    "featureType": "building",
+    "elementType": "geometry",
+    "stylers": [
+      { "color": "#006600" }       // dim green buildings (footprints)
+    ]
+  }
+]

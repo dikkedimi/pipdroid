@@ -15,7 +15,8 @@
         android:contentDescription="@string/splashDescription"
         android:scaleType="centerInside"
         android:layout_weight="0.9"
-        android:src="@drawable/vaultboy_splash" />
+        android:src="@drawable/vaultboy_splash" 
+        android:visibility="invisible"/>
 
 
     <TextView

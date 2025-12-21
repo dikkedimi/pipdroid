@@ -1,0 +1,126 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:gravity="center"
+    android:orientation="horizontal"
+    android:weightSum="1.0"
+    android:layout_marginLeft="10dip"
+    android:layout_marginRight="10dip"
+    android:layout_gravity="center">
+
+    <!-- Local Map -->
+    <LinearLayout
+        android:id="@+id/btn_localmap_box"
+        android:layout_width="0dip"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.2"
+        android:gravity="center"
+        android:padding="10dip">
+
+        <TextView
+            android:id="@+id/btn_localmap"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:shadowColor="#000000"
+            android:shadowDx="0"
+            android:shadowDy="0"
+            android:shadowRadius="10"
+            android:text="Local Map"
+            android:textColor="#aaffaa"
+            android:textSize="18dip" />
+
+    </LinearLayout>
+
+    <!-- World Map -->
+    <LinearLayout
+        android:id="@+id/btn_worldmap_box"
+        android:layout_width="0dip"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.2"
+        android:gravity="center"
+        android:padding="10dip">
+
+        <TextView
+            android:id="@+id/btn_worldmap"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:shadowColor="#000000"
+            android:shadowDx="0"
+            android:shadowDy="0"
+            android:shadowRadius="10"
+            android:text="World Map"
+            android:textColor="#aaffaa"
+            android:textSize="18dip" />
+
+    </LinearLayout>
+
+    <!-- Quests -->
+    <LinearLayout
+        android:id="@+id/btn_quests_box"
+        android:layout_width="0dip"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.2"
+        android:gravity="center"
+        android:padding="10dip">
+
+        <TextView
+            android:id="@+id/btn_quests"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:shadowColor="#000000"
+            android:shadowDx="0"
+            android:shadowDy="0"
+            android:shadowRadius="10"
+            android:text="Quests"
+            android:textColor="#aaffaa"
+            android:textSize="18dip" />
+
+    </LinearLayout>
+
+    <!-- Notes -->
+    <LinearLayout
+        android:id="@+id/btn_notes_box"
+        android:layout_width="0dip"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.2"
+        android:gravity="center"
+        android:padding="10dip">
+
+        <TextView
+            android:id="@+id/btn_notes"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:shadowColor="#000000"
+            android:shadowDx="0"
+            android:shadowDy="0"
+            android:shadowRadius="10"
+            android:text="Notes"
+            android:textColor="#aaffaa"
+            android:textSize="18dip" />
+
+    </LinearLayout>
+
+    <!-- Radio -->
+    <LinearLayout
+        android:id="@+id/btn_radio_box"
+        android:layout_width="0dip"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.2"
+        android:gravity="center"
+        android:padding="10dip">
+
+        <TextView
+            android:id="@+id/btn_radio"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:shadowColor="#000000"
+            android:shadowDx="0"
+            android:shadowDy="0"
+            android:shadowRadius="10"
+            android:text="Radio"
+            android:textColor="#aaffaa"
+            android:textSize="18dip" />
+
+    </LinearLayout>
+
+</LinearLayout>
