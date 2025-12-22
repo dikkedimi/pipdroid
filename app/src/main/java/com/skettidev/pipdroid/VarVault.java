@@ -31,6 +31,8 @@ public class VarVault {
 	
 	// Three main buttons
 	protected static ImageView stats, items, data;
+
+
 	protected static ArrayList<ImageView> MAIN_BUTTONS = new ArrayList<ImageView>();
 
 	// Top bar content

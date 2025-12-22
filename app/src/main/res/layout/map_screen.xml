@@ -1,67 +1,21 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/map_screen_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
-
-    <!-- Top Bar -->
-    <LinearLayout
-        android:id="@+id/top_bar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:background="@android:color/darker_gray"
-        android:padding="10dp">
-
-        <TextView
-            android:id="@+id/top_bar_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Map Title"
-            android:textSize="18sp"
-            android:textColor="@android:color/white" />
-    </LinearLayout>
-
-    <!-- Mid Panel -->
-    <LinearLayout
-        android:id="@+id/mid_panel"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:background="@android:color/holo_blue_light"
-        android:padding="10dp">
-
-        <TextView
-            android:id="@+id/mid_panel_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Mid Panel Content"
-            android:textSize="16sp"
-            android:textColor="@android:color/white" />
-    </LinearLayout>
-
-    <!-- Map Fragment Container -->
-    <FrameLayout
+    tools:context=".MapScreenActivity"
+    android:layout_height="match_parent">
+        <FrameLayout
         android:id="@+id/map_fragment_container"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"/>
-
-    <!-- Bottom Bar -->
-    <LinearLayout
-        android:id="@+id/bottom_bar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:background="@android:color/holo_green_light"
-        android:padding="10dp">
-
-        <TextView
-            android:id="@+id/bottom_bar_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Bottom Bar Content"
-            android:textSize="16sp"
-            android:textColor="@android:color/white" />
-    </LinearLayout>
-
-</LinearLayout>
+        android:layout_height="match_parent"/>
+        <ImageButton
+        android:id="@+id/btnCompassToggle"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_margin="12dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@android:drawable/ic_menu_compass"
+        android:contentDescription="Toggle compass"
+        android:layout_gravity="top|end" />
+</FrameLayout>

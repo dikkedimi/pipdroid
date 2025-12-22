@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+<!--    <style name="Theme.PipDroid3000mkII.ColorScheme" parent="@android:style/Theme.Black.NoTitleBar">-->
+    <color name="white">#E6FFF1</color>
+    <color name="ghost">#B8FFD7</color>
+    <color name="pearl">#8AFFBD</color>
+    <color name="cloud">#5CFFA3</color>
+    <color name="silver">#2EFF89</color>
+    <color name="grey">#00FF6E</color>
+    <color name="ash">#00D15B</color>
+    <color name="graphite">#00A347</color>
+    <color name="slate">#007533</color>
+    <color name="charcoal">#00471F</color>
+    <color name="black">#001A0B</color>
+<!--    </style>-->
+</resources>
