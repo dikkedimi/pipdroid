@@ -41,6 +41,7 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.activity:activity:1.7.2")
     implementation("com.daimajia.androidanimations:library:2.4@aar")
+    implementation("androidx.constraintlayout:constraintlayout:2.2.1")
     implementation(libs.appcompat)
     implementation(libs.material)
     testImplementation(libs.junit)
