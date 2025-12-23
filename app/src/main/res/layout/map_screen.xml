@@ -11,6 +11,8 @@
         android:layout_height="match_parent"/>
         <ImageButton
         android:id="@+id/btnCompassToggle"
+        android:focusableInTouchMode="true"
+        android:clickable="true"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_margin="12dp"

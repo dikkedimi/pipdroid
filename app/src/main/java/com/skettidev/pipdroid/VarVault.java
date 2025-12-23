@@ -21,7 +21,8 @@ public class VarVault {
 	public static GoogleMap mMap;
 	public static LatLng playerLocation;
 	// SPECIAL stats
-
+	public static final float WORLD_MAP_ZOOM = 13.5f; // city-wide
+	public static final float LOCAL_MAP_ZOOM = 16.5f; // nearby streets
 	protected static Stat strength = new Stat(), perception = new Stat(), endurance = new Stat(), charisma = new Stat(), intelligence = new Stat(), agility = new Stat(), luck = new Stat();
 	protected static ArrayList<Stat> SPECIAL_STAT_VALUES = new ArrayList<Stat>();
 	
