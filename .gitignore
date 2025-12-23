@@ -26,7 +26,8 @@ $RECYCLE.BIN/
 .LSOverride
 
 # Icon must ends with two \r.
-Icon
+Icon
+
 
 # Thumbnails
 ._*
@@ -35,3 +36,4 @@ Icon
 .Spotlight-V100
 .Trashes
 app/src/main/res/values/google_maps_api.xml
+app/res/values/google_maps_api.xml

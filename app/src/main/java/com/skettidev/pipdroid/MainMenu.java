@@ -49,7 +49,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import java.io.IOException;
 
 
-public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, SurfaceHolder.Callback, View.OnClickListener, View.OnLongClickListener  {
+public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, SurfaceHolder.Callback, View.OnClickListener, View.OnLongClickListener {
 
 
 	//public vars
@@ -62,6 +62,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 	private SupportMapFragment mapFragment;
 	private SensorManager sensorManager;
 	private Sensor rotationSensor;
+
 	private float[] rotationMatrix = new float[9];
 	private float[] orientation = new float[3];
 	private final ActivityResultLauncher<String> requestPermissionLauncher =
@@ -82,6 +83,16 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		super.onCreate(savedInstanceState);
 		sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 		rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+
+		if(rotationSensor !=null) {
+			sensorManager.registerListener(
+					sensorEventListener,
+					rotationSensor,
+					SensorManager.SENSOR_DELAY_UI
+			);
+		} else {
+			Log.e("Sensors", "Rotation vector sensor not available on this device");
+		}
 		setContentView(R.layout.main);
 
 		// Initialize all buttons once in onCreate()
@@ -1060,7 +1071,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 	// onResume()
 	protected void onResume() {
 		super.onResume();
-//		sensorManager.registerListener(sensorEventListener, rotationSensor, SensorManager.SENSOR_DELAY_UI);
+		sensorManager.registerListener(sensorEventListener, rotationSensor, SensorManager.SENSOR_DELAY_UI);
 		this.setVolumeControlStream(AudioManager.STREAM_MUSIC);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		// Check if the map fragment is already added
@@ -1070,7 +1081,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 
 		ViewGroup topBar = (ViewGroup) findViewById(R.id.top_bar);
 		// Check if topBar is null
-		if (topBar == null) {
+		if (topBar != null) {
 			topBar.removeAllViews();  // Proceed with removing all views safely
 		} else {
 			Log.e("onResume", "top_bar is null! Cannot remove views.");
@@ -1079,7 +1090,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
 
 		// Check if midPanel is null
-		if (midPanel == null) {
+		if (midPanel != null) {
 			Log.e("onResume", "midPanel is null! Cannot remove views.");
 		} else {
 			midPanel.removeAllViews();  // Proceed with removing all views safely
@@ -1087,7 +1098,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 
 		ViewGroup bottomBar = (ViewGroup) findViewById(R.id.bottom_bar);
 		// Check if bottomBar is null
-		if (bottomBar == null) {
+		if (bottomBar != null) {
 			bottomBar.removeAllViews();  // Proceed with removing all views safely
 		} else {
 			Log.e("onResume", "bottom_bar is null! Cannot remove views.");
@@ -1096,10 +1107,16 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		LayoutInflater inf = this.getLayoutInflater();
 
 		// Main screen turn on
-		inf.inflate(R.layout.status_screen, midPanel, true);
-		inf.inflate(R.layout.stats_bar_top, topBar, true);
-		inf.inflate(R.layout.stats_bar_bottom, bottomBar, true);
 
+		if (topBar != null) {
+			inf.inflate(R.layout.stats_bar_top, topBar, true);
+		}
+		if (midPanel != null) {
+			inf.inflate(R.layout.status_screen, midPanel, true);
+		}
+		if (bottomBar != null) {
+			inf.inflate(R.layout.stats_bar_bottom, bottomBar, true);
+		}
 		// Format top bar text
 		VarVault.title = (TextView) findViewById(R.id.title_stats);
 		VarVault.title.setText("STATUS");
@@ -1119,15 +1136,25 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		// Button-ize the buttons
 		VarVault.status = (TextView) findViewById(R.id.btn_status);
 		VarVault.statusLL = (LinearLayout) findViewById(R.id.btn_status_box);
-		VarVault.status.setTypeface(VarVault.font);
-		VarVault.status.setOnClickListener(this);
-		VarVault.statusLL.setOnClickListener(this);
 
-		VarVault.special = (TextView) findViewById(R.id.btn_special);
-		VarVault.specialLL = (LinearLayout) findViewById(R.id.btn_special_box);
-		VarVault.special.setTypeface(VarVault.font);
-		VarVault.special.setOnClickListener(this);
-		VarVault.specialLL.setOnClickListener(this);
+		if (VarVault.status != null && VarVault.statusLL != null) {
+			VarVault.status.setTypeface(VarVault.font);
+			VarVault.statusLL.setOnClickListener(this);
+			VarVault.status.setOnClickListener(this);
+			VarVault.statusLL.setOnClickListener(this);
+		} else {
+			Log.e("statsClicked", "status or statusLL is null! Cannot set OnClickListener.");
+		}
+
+		if (VarVault.special != null && VarVault.specialLL != null) {
+			VarVault.special = (TextView) findViewById(R.id.btn_special);
+			VarVault.specialLL = (LinearLayout) findViewById(R.id.btn_special_box);
+			VarVault.special.setTypeface(VarVault.font);
+			VarVault.special.setOnClickListener(this);
+			VarVault.specialLL.setOnClickListener(this);
+		} else {
+			Log.e("statsClicked", "special or specialLL is null! Cannot set OnClickListener.");
+		}
 
 		VarVault.skills = (TextView) findViewById(R.id.btn_skills);
 		VarVault.skillsLL = (LinearLayout) findViewById(R.id.btn_skills_box);
