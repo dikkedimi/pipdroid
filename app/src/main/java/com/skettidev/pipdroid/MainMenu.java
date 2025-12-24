@@ -1,5 +1,4 @@
 package com.skettidev.pipdroid;
-
 import android.os.Handler;
 import android.os.Looper;
 import android.Manifest;
@@ -23,16 +22,16 @@ import android.view.SurfaceHolder;
 import android.view.*;
 import android.view.ViewGroup.LayoutParams;
 import android.view.WindowManager;
+import androidx.core.view.WindowInsetsControllerCompat;
+
+import androidx.core.view.WindowInsetsCompat;
+
 import android.view.LayoutInflater;
 import android.widget.*;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -45,49 +44,83 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.MarkerOptions;
+import androidx.core.view.WindowCompat;
+import android.hardware.SensorEventListener;
 
 import java.io.IOException;
 
 
-public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, View.OnClickListener, View.OnLongClickListener {
+public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, SurfaceHolder.Callback, View.OnClickListener, View.OnLongClickListener {
 
-
-	//public vars
-	public static GoogleMap mMap;
 
 	//private vars
+	public static GoogleMap mMap;
 	private boolean isCompassModeEnabled = false;
 	private MapViewType currentMapView;
-
+	private ImageButton compassToggle;
 	private SupportMapFragment mapFragment;
+	private SensorEventListener sensorEventListener;
 	private SensorManager sensorManager;
 	private Sensor rotationSensor;
-
-	private enum MapViewType { WORLD, LOCAL }
 
 	private float[] rotationMatrix = new float[9];
 	private float[] orientation = new float[3];
 
 	private float zoomLevel = VarVault.WORLD_MAP_ZOOM; // default to WORLD MAP
 
+	private enum MapViewType { WORLD, LOCAL }
+
 	private final ActivityResultLauncher<String> requestPermissionLauncher =
 			registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
 				if (isGranted) {
-					enableLocation(zoomLevel);  // Enable location if permission is granted
+					enableLocation();  // Enable location if permission is granted
 				} else {
 					Toast.makeText(MainMenu.this, "Permission denied", Toast.LENGTH_SHORT).show();
 				}
 			});
+//	FusedLocationProviderClient fusedLocationClient= LocationServices.getFusedLocationProviderClient(this);
 
 	// ########################
 	// ## On app start ########
 	// ########################
-
+//	@Override
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+//		// Allow content behind system bars
+//		WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+
+		// Hide system bars
+		WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+
+		// Hide system bars
+		WindowInsetsControllerCompat controller =
+				new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView());
+
+		controller.hide(
+				WindowInsetsCompat.Type.statusBars()
+//						| WindowInsetsCompat.Type.navigationBars()
+		);
+
+		// Allow swipe to show bars temporarily
+		controller.setSystemBarsBehavior(
+				WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+		);
+		setContentView(R.layout.main);
+
 		sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 		rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+
+		sensorEventListener = new SensorEventListener() {
+			@Override
+			public void onSensorChanged(SensorEvent event) {
+				// handle sensor data
+			}
+
+			@Override
+			public void onAccuracyChanged(Sensor sensor, int accuracy) {
+			}
+		};
 
 		if (rotationSensor != null) {
 			sensorManager.registerListener(
@@ -98,10 +131,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, V
 		} else {
 			Log.e("Sensors", "Rotation vector sensor not available on this device");
 		}
-		setContentView(R.layout.main);
 
-		// Initialize all buttons once in onCreate()
-		initializeMenuButtons();
 
 		// ===== Initialize sound =====
 		HandleSound.initSound(this.getApplicationContext());
@@ -134,7 +164,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, V
 		z.setTextColor(Color.argb(100, 255, 225, 0));
 		VarVault.data.setOnClickListener(this);
 
-		// ===== Initialize main menu functions =====
+		// ===== Initialize stats and arrays =====
 		initSkills();
 		initSpecial();
 		InitializeArrays.all();
@@ -143,12 +173,12 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, V
 
 		// ===== Optional: initialize map immediately =====
 		// If you want the map ready at startup, you can call:
-//		 dataClicked();
+		// dataClicked();
 	}
 
 	@Override
 	public void onClick(View source) {
-		Log.e("onClick()", "start");
+
 		VarVault.curCaps.setValue(VarVault.curCaps.getValue() + 5);
 
 		// Play a tune, dependent on source.
@@ -161,82 +191,71 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, V
 
 		// Set the panels for future usage.
 		ViewGroup midPanel = findViewById(R.id.mid_panel);
-
+		ViewGroup topBar = findViewById(R.id.top_bar);
 		ViewGroup bottomBar = findViewById(R.id.bottom_bar);
 
-		ViewGroup topBar = findViewById(R.id.top_bar);  // Or whichever view you're targeting
-
 		// Sort the source
-		Log.e("onClick()", "sort source");
-
-		if (source == VarVault.stats) {
+		if (source == VarVault.stats)
 			statsClicked();
-			Log.e("onClick()", "statsClicked()");
-		}
-		else if (source == VarVault.statusLL) {
+		else if (source == VarVault.statusLL)
 			statusClicked();
-			Log.e("onClick()", "statusClicked()");
-		}
-		else if (source == VarVault.specialLL || source == VarVault.special) {
+		else if (source == VarVault.specialLL || source == VarVault.special)
 			specialClicked();
-			Log.e("onClick()", "specialClicked()");
-		}
-		else if (source == VarVault.skillsLL || source == VarVault.skills) {
+		else if (source == VarVault.skillsLL || source == VarVault.skills)
 			skillsClicked();
-			Log.e("onClick()", "skillsClicked()");
-		}
-		else if (VarVault.SUBMENU_SPECIAL.contains(source)) {
+		else if (source == VarVault.perksLL) {
+		} else if (source == VarVault.generalLL) {
+		} else if (source == VarVault.cnd || source == VarVault.rad || source == VarVault.stimpak) {
+		} else if (VarVault.SUBMENU_SPECIAL.contains(source))
 			specialStatClicked(source);
-			Log.e("onClick()", "specialStatClicked()");
-		}
-		else if (VarVault.SUBMENU_SKILLS.contains(source)) {
+		else if (VarVault.SUBMENU_SKILLS.contains(source))
 			skillStatClicked(source);
-			Log.e("onClick()", "skillStatClicked()");
-		}
-		else if (source == VarVault.flashlight) {
+		else if (source == VarVault.flashlight)
 			flashlightClicked();
-			Log.e("onClick()", "flashlightClicked()");
-		}
-		else if (source == VarVault.items) {
+		else if (source == VarVault.items)
 			itemsClicked();
-			Log.e("onClick()", "itemsClicked()");
-		}
-		else if (source == VarVault.weaponsLL) {
+		else if (source == VarVault.weaponsLL)
 			weaponsClicked();
-			Log.e("onClick()", "weaponsClicked()");
-		}
-		else if (source == VarVault.apparelLL) {
+		else if (VarVault.Weapons.contains(source)) {
+		} else if (source == VarVault.apparelLL)
 			apparelClicked();
-			Log.e("onClick()", "apparelClicked()");
-		}
-		else if (
-				source == VarVault.aidLL ||
-						source == VarVault.miscLL ||
-						source == VarVault.ammoLL
-		) {
+		else if (VarVault.Apparel.contains(source)) {
+		} else if (source == VarVault.aidLL) {
 			updateCAPS();
-			Log.e("onClick()", "updateCAPS()");
-		}
-		else if (source == VarVault.data) {
-			dataClicked(source);
-			Log.e("onClick()", "dataClicked(source)");
-		}
+		} else if (source == VarVault.miscLL) {
+			updateCAPS();
+		} else if (source == VarVault.ammoLL) {
+			updateCAPS();
+		} else if (source == VarVault.data)
+			dataClicked();
 
-		Log.e("onClick()", "sort source DONE!");
+			// ===== DATA BUTTONS HANDLING =====
+		else if (source == VarVault.localMapLL)
+			showLocalMap();
+		else if (source == VarVault.worldMapLL)
+			showWorldMap();
+		else if (source == VarVault.questsLL)
+			Log.d("Menu", "Quests clicked");
+		else if (source == VarVault.notesLL)
+			Log.d("Menu", "Notes clicked");
+		else if (source == VarVault.radioLL)
+			Log.d("Menu", "Radio clicked");
 
+		else {
+			topBar.removeAllViews();
+			midPanel.removeAllViews();
+			bottomBar.removeAllViews();
+		}
 	}
 
 
 	private void flashlightClicked() {
-		Log.e("flashlightClicked()", "flashlightClicked START!");
 		if (VarVault.mCamera == null) {
-			Log.e("flashlightClicked()", "flashlightClicked VarVault.mCamerais NULL!");
 			VarVault.preview = (SurfaceView) findViewById(R.id.PREVIEW);
 			VarVault.mHolder = VarVault.preview.getHolder();
 			VarVault.mCamera = Camera.open();
 			try {
 				VarVault.mCamera.setPreviewDisplay(VarVault.mHolder);
-				Log.e("flashlightClicked()", "Try set preview display!");
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -246,7 +265,6 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, V
 
 		// If it's off, turn it on
 		if (VarVault.isCamOn == false) {
-			Log.e("flashlightClicked()", "If it's off, turn it on");
 			Parameters params = VarVault.mCamera.getParameters();
 			params.setFlashMode(Parameters.FLASH_MODE_TORCH);
 			VarVault.mCamera.setParameters(params);
@@ -256,7 +274,6 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, V
 
 		// If it's on, turn it off
 		else {
-			Log.e("flashlightClicked()", "If it's on, turn it off");
 			Parameters params = VarVault.mCamera.getParameters();
 			params.setFlashMode(Parameters.FLASH_MODE_OFF);
 			VarVault.mCamera.setParameters(params);
@@ -268,232 +285,126 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, V
 	}
 
 	private void statsClicked() {
-		Log.e("statsClicked()", "statsClicked START");
 		// Clear crap
-
 		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
 		ViewGroup topBar = (ViewGroup) findViewById(R.id.top_bar);
 		ViewGroup bottomBar = (ViewGroup) findViewById(R.id.bottom_bar);
-
-		// Check if midPanel is null
-		if (midPanel != null) {
-			Log.e("StatsClicked", "midPanel is null! Cannot remove views.");
-		} else {
-			midPanel.removeAllViews();  // Proceed with removing all views safely
-		}
-
-		// Check if topBar is null
-		if (topBar != null) {
-			topBar.removeAllViews();  // Proceed with removing all views safely
-		} else {
-			Log.e("StatsClicked", "top_bar is null! Cannot remove views.");
-		}
-
-		// Check if bottomBar is null
-		if (bottomBar != null) {
-			bottomBar.removeAllViews();  // Proceed with removing all views safely
-		} else {
-			Log.e("StatsClicked", "bottom_bar is null! Cannot remove views.");
-		}
-
 		LayoutInflater inf = this.getLayoutInflater();
 
-		// Inflate new layouts
-		if (midPanel != null) {
-			inf.inflate(R.layout.status_screen, midPanel);
-		} else {
-			Log.e("StatsClicked", "midPanel is still null after check! Cannot inflate status_screen.");
-		}
+		midPanel.removeAllViews();
+		topBar.removeAllViews();
+		bottomBar.removeAllViews();
 
-		if (topBar != null) {
-			inf.inflate(R.layout.stats_bar_top, topBar);
-		} else {
-			Log.e("StatsClicked", "topBar is still null after check! Cannot inflate stats_bar_top.");
-		}
-
-		if (bottomBar != null) {
-			inf.inflate(R.layout.stats_bar_bottom, bottomBar);
-		} else {
-			Log.e("StatsClicked", "bottomBar is still null after check! Cannot inflate stats_bar_bottom.");
-		}
+		// Main screen turn on
+		inf.inflate(R.layout.status_screen, midPanel);
+		inf.inflate(R.layout.stats_bar_top, topBar);
+		inf.inflate(R.layout.stats_bar_bottom, bottomBar);
 
 		// Format top bar text
 		VarVault.title = (TextView) findViewById(R.id.title_stats);
-		if (VarVault.title != null) {
-			VarVault.title.setText("STATUS");
-			VarVault.title.setTypeface(VarVault.font);
-		} else {
-			Log.e("StatsClicked", "title_stats is null! Cannot set title text.");
-		}
+		VarVault.title.setText("STATUS");
+		VarVault.title.setTypeface(VarVault.font);
 
 		VarVault.hp = (TextView) findViewById(R.id.hp_stats);
-		if (VarVault.hp != null) {
-			VarVault.hp.setTypeface(VarVault.font);
-		}
+		VarVault.hp.setTypeface(VarVault.font);
 
 		VarVault.ap = (TextView) findViewById(R.id.ap_stats);
-		if (VarVault.ap != null) {
-			VarVault.ap.setTypeface(VarVault.font);
-		}
+		VarVault.ap.setTypeface(VarVault.font);
 
 		VarVault.bat = (TextView) findViewById(R.id.bat_stats);
-		if (VarVault.bat != null) {
-			VarVault.bat.setTypeface(VarVault.font);
-			this.registerReceiver(VarVault.mBatInfoReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-		}
+		VarVault.bat.setTypeface(VarVault.font);
+		this.registerReceiver(VarVault.mBatInfoReceiver, new IntentFilter(
+				Intent.ACTION_BATTERY_CHANGED));
 
-// Button-ize the buttons
+		// Button-ize the buttons
 		VarVault.status = (TextView) findViewById(R.id.btn_status);
 		VarVault.statusLL = (LinearLayout) findViewById(R.id.btn_status_box);
-		if (VarVault.status != null && VarVault.statusLL != null) {
-			VarVault.status.setTypeface(VarVault.font);
-			VarVault.statusLL.setOnClickListener(this);
-		} else {
-			Log.e("statsClicked", "status or statusLL is null! Cannot set OnClickListener.");
-		}
+		VarVault.status.setTypeface(VarVault.font);
+		VarVault.statusLL.setOnClickListener(this);
 
 		VarVault.special = (TextView) findViewById(R.id.btn_special);
 		VarVault.specialLL = (LinearLayout) findViewById(R.id.btn_special_box);
-		if (VarVault.special != null && VarVault.specialLL != null) {
-			VarVault.special.setTypeface(VarVault.font);
-			VarVault.specialLL.setOnClickListener(this);
-		} else {
-			Log.e("statsClicked", "special or specialLL is null! Cannot set OnClickListener.");
-		}
+		VarVault.special.setTypeface(VarVault.font);
+		VarVault.specialLL.setOnClickListener(this);
 
 		VarVault.skills = (TextView) findViewById(R.id.btn_skills);
 		VarVault.skillsLL = (LinearLayout) findViewById(R.id.btn_skills_box);
-		if (VarVault.skills != null && VarVault.skillsLL != null) {
-			VarVault.skills.setTypeface(VarVault.font);
-			VarVault.skillsLL.setOnClickListener(this);
-		} else {
-			Log.e("statsClicked", "skills or skillsLL is null! Cannot set OnClickListener.");
-		}
+		VarVault.skills.setTypeface(VarVault.font);
+		VarVault.skillsLL.setOnClickListener(this);
 
 		VarVault.perks = (TextView) findViewById(R.id.btn_perks);
 		VarVault.perksLL = (LinearLayout) findViewById(R.id.btn_perks_box);
-		if (VarVault.perks != null && VarVault.perksLL != null) {
-			VarVault.perks.setTypeface(VarVault.font);
-			VarVault.perksLL.setOnClickListener(this);
-		} else {
-			Log.e("statsClicked", "perks or perksLL is null! Cannot set OnClickListener.");
-		}
+		VarVault.perks.setTypeface(VarVault.font);
+		VarVault.perksLL.setOnClickListener(this);
 
 		VarVault.general = (TextView) findViewById(R.id.btn_general);
 		VarVault.generalLL = (LinearLayout) findViewById(R.id.btn_general_box);
-		if (VarVault.general != null && VarVault.generalLL != null) {
-			VarVault.general.setTypeface(VarVault.font);
-			VarVault.generalLL.setOnClickListener(this);
-		} else {
-			Log.e("statsClicked", "general or generalLL is null! Cannot set OnClickListener.");
-		}
-
+		VarVault.general.setTypeface(VarVault.font);
+		VarVault.generalLL.setOnClickListener(this);
 
 		statusClicked();
 
 	}
 
 	private void itemsClicked() {
-		// check to see if views are NULL, if not, clear them.
-
-		ViewGroup topBar = (ViewGroup) findViewById(R.id.top_bar);
-		if (topBar != null) {
-			topBar.removeAllViews();  // Proceed with removing all views safely
-		} else {
-			Log.e("itemsClicked", "top_bar is null! Cannot remove views.");
-		}
-
+		// Clear crap
 		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
-		if (midPanel != null) {
-			midPanel.removeAllViews();  // Proceed with removing all views safely
-		} else {
-			Log.e("itemsClicked", "mid_panel is null! Cannot remove views.");
-		}
-
+		ViewGroup topBar = (ViewGroup) findViewById(R.id.top_bar);
 		ViewGroup bottomBar = (ViewGroup) findViewById(R.id.bottom_bar);
-		if (bottomBar != null) {
-			bottomBar.removeAllViews();  // Proceed with removing all views safely
-		} else {
-			Log.e("itemsClicked", "bottom_bar is null! Cannot remove views.");
-		}
-
-		// inflate layout
 		LayoutInflater inf = this.getLayoutInflater();
 
+		midPanel.removeAllViews();
+		topBar.removeAllViews();
+		bottomBar.removeAllViews();
 
 		// Main screen turn on
-		if (midPanel != null) {
-			inf.inflate(R.layout.weapons_screen, midPanel);
-		}
-
-		if (topBar != null) {
-			inf.inflate(R.layout.items_bar_top, topBar);
-		}
-
-		if (bottomBar != null) {
-			inf.inflate(R.layout.items_bar_bottom, bottomBar);
-		}
+		inf.inflate(R.layout.weapons_screen, midPanel);
+		inf.inflate(R.layout.items_bar_top, topBar);
+		inf.inflate(R.layout.items_bar_bottom, bottomBar);
 
 		VarVault.title = (TextView) findViewById(R.id.title_items);
-		if (VarVault.title != null) {
-			VarVault.title.setTypeface(VarVault.font);
-		}
 		VarVault.title.setTypeface(VarVault.font);
 
 		VarVault.wg = (TextView) findViewById(R.id.wg_items);
-		if (VarVault.wg != null) {
-			VarVault.maxWG.setValue(150 + (10 * VarVault.strength.getValue()));
-			updateWG();
-			VarVault.wg.setTypeface(VarVault.font);
-		}
+		VarVault.maxWG.setValue(150 + (10 * VarVault.strength.getValue()));
+		updateWG();
+		VarVault.wg.setTypeface(VarVault.font);
 
 		VarVault.caps = (TextView) findViewById(R.id.caps_items);
-		if (VarVault.caps != null) {
-			updateCAPS();
-			VarVault.caps.setTypeface(VarVault.font);
-		}
+		updateCAPS();
+		VarVault.caps.setTypeface(VarVault.font);
+		//VarVault.caps.setText(VarVault.curCaps.getValue());
 
 		VarVault.bat = (TextView) findViewById(R.id.bat_items);
-		if (VarVault.bat != null) {
-			VarVault.bat.setTypeface(VarVault.font);
-			this.registerReceiver(VarVault.mBatInfoReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-		}
+		VarVault.bat.setTypeface(VarVault.font);
+		this.registerReceiver(VarVault.mBatInfoReceiver, new IntentFilter(
+				Intent.ACTION_BATTERY_CHANGED));
 
 		// Button-ize the buttons
 		VarVault.weapons = (TextView) findViewById(R.id.btn_weapons);
-		if (VarVault.weapons != null) {
-			VarVault.weapons.setTypeface(VarVault.font);
-			VarVault.weaponsLL = (LinearLayout) findViewById(R.id.btn_weapons_box);
-			VarVault.weaponsLL.setOnClickListener(this);
-		}
+		VarVault.weaponsLL = (LinearLayout) findViewById(R.id.btn_weapons_box);
+		VarVault.weapons.setTypeface(VarVault.font);
+		VarVault.weaponsLL.setOnClickListener(this);
 
 		VarVault.apparel = (TextView) findViewById(R.id.btn_apparel);
-		if (VarVault.apparel != null) {
-			VarVault.apparel.setTypeface(VarVault.font);
-			VarVault.apparelLL = (LinearLayout) findViewById(R.id.btn_apparel_box);
-			VarVault.apparelLL.setOnClickListener(this);
-		}
+		VarVault.apparelLL = (LinearLayout) findViewById(R.id.btn_apparel_box);
+		VarVault.apparel.setTypeface(VarVault.font);
+		VarVault.apparelLL.setOnClickListener(this);
 
 		VarVault.aid = (TextView) findViewById(R.id.btn_aid);
-		if (VarVault.aid != null) {
-			VarVault.aid.setTypeface(VarVault.font);
-			VarVault.aidLL = (LinearLayout) findViewById(R.id.btn_aid_box);
-			VarVault.aidLL.setOnClickListener(this);
-		}
+		VarVault.aidLL = (LinearLayout) findViewById(R.id.btn_aid_box);
+		VarVault.aid.setTypeface(VarVault.font);
+		VarVault.aidLL.setOnClickListener(this);
 
 		VarVault.misc = (TextView) findViewById(R.id.btn_misc);
-		if (VarVault.misc != null) {
-			VarVault.misc.setTypeface(VarVault.font);
-			VarVault.miscLL = (LinearLayout) findViewById(R.id.btn_misc_box);
-			VarVault.miscLL.setOnClickListener(this);
-		}
+		VarVault.miscLL = (LinearLayout) findViewById(R.id.btn_misc_box);
+		VarVault.misc.setTypeface(VarVault.font);
+		VarVault.miscLL.setOnClickListener(this);
 
 		VarVault.ammo = (TextView) findViewById(R.id.btn_ammo);
-		if (VarVault.ammo != null) {
-			VarVault.ammo.setTypeface(VarVault.font);
-			VarVault.ammoLL = (LinearLayout) findViewById(R.id.btn_ammo_box);
-			VarVault.ammoLL.setOnClickListener(this);
-		}
+		VarVault.ammoLL = (LinearLayout) findViewById(R.id.btn_ammo_box);
+		VarVault.ammo.setTypeface(VarVault.font);
+		VarVault.ammoLL.setOnClickListener(this);
 
 		populateOwnedWeapons();
 
@@ -525,129 +436,77 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, V
 		updateCAPS();
 	}
 
-	private void dataClicked(View source) {
-
-		View mapScreen = null;
-
-		// check topBar
-		ViewGroup topBar = findViewById(R.id.top_bar);
-		if (topBar != null) {
-			topBar.removeAllViews();  // Proceed with removing all views safely
-		} else {
-			Log.e("dataClicked", "top_bar is null! Cannot remove views.");
-		}
-		//check mid_panel
-		ViewGroup midPanel = findViewById(R.id.mid_panel);
-		if (midPanel != null) {
-			midPanel.removeAllViews();  // Clear the midPanel to remove any current views
-			Log.e("dataClicked", "Cleared midPanel.");
-
-
-
-		}
-		//viewGroup midpanel additional setup?
-		if (midPanel != null) {
-			ViewGroup.LayoutParams params = midPanel.getLayoutParams();
-			params.width = ViewGroup.LayoutParams.MATCH_PARENT;
-			midPanel.setLayoutParams(params);
-		}
-
-		//check bottom bar
-		ViewGroup bottomBar = findViewById(R.id.bottom_panel);
-		// Dynamically inflate the bottom bar based on some condition
-		if (bottomBar != null) {
-			bottomBar.removeAllViews();
-
-			View bottomBarView = LayoutInflater.from(this)
-					.inflate(R.layout.data_bar_bottom, bottomBar, true);
-					initializeMenuButtons();
-//			View bottom_bar = bottomBarView.findViewById(R.id.bottom_bar);
-		} else {
-			Log.e("dataClicked", "bottom_panel is null! Cannot remove views.");
-		}
-
-		LayoutInflater inflater = getLayoutInflater();
-		mapScreen = inflater.inflate(R.layout.map_screen, midPanel, false); // Add map screen to midPanel
-
-		if (mapScreen != null) {
-			midPanel.addView(mapScreen);
-			Log.e("dataClicked", "Inflated map screen to the midPanel.");
-			// 🔑 INITIALIZE COMPASS HERE
-			initCompassToggle(mapScreen);
-		} else {
-			Log.e("dataClicked()", "mapScreen inflation FAILED.");
-			return;
-		}
-
-		View mapFragmentContainer = findViewById(R.id.map_fragment_container);
-		if (mapFragmentContainer != null && mapFragmentContainer.getVisibility() == View.VISIBLE) {
-			Log.e("dataClicked", "mapContainer left=" + mapFragmentContainer.getLeft() + " right=" + mapFragmentContainer.getRight());
-			// Try to find an existing fragment by its tag
-			SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentByTag("MAP_FRAGMENT_TAG");
-			if (mapFragment == null) {
-				mapFragment = SupportMapFragment.newInstance();
-				FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-				Log.e("dataClicked", "Map fragment is not found, create and add it.");
-				transaction.replace(R.id.map_fragment_container, mapFragment, "MAP_FRAGMENT_TAG");
-				transaction.commit();
-			} else {
-				Log.e("dataClicked", "Map fragment already exists.");
-			}
-			mapFragment.getMapAsync(this);
-		}
-		//now for the logic stuff
-//		inflate mapScreen
-		// data button menu handling
-
-
-	}
-	// Sets the active map view and moves the camera
-//	private void setActiveMapView(MapViewType currentMapView) {
-////		currentMapView = mapViewType;
-//
-//		if (mMap != null && VarVault.playerLocation != null) {
-//			switch (currentMapView) {
-//				case LOCAL:
-//					setInitialCameraPosition(VarVault.LOCAL_MAP_ZOOM);
-//					break;
-//				case WORLD:
-//					setInitialCameraPosition(VarVault.WORLD_MAP_ZOOM);
-//					break;
-//			}
-//		}
-		// Update button UI (alpha) to reflect active map
-//		updateMapButtonsUI();
-//	}
-	// Updates the alpha of map buttons only
-	private void updateMapButtonsUI() {
-		VarVault.localMapLL.setAlpha(currentMapView == MapViewType.LOCAL ? 1f : 0.4f);
-		VarVault.worldMapLL.setAlpha(currentMapView == MapViewType.WORLD ? 1f : 0.4f);
-		// Other buttons
-//		VarVault.questsLL.oncli
-//			Log.d("Menu", "Quests clicked");
-//		} else if (source == VarVault.notesLL) {
-//			Log.d("Menu", "Notes clicked");
-//		} else if (source == VarVault.radioLL) {
-//			Log.d("Menu", "Radio clicked");
-//		}
-	}
-
-	private void statusClicked() {
-//		setContentView(R.layout.main);
-		ViewGroup midPanel = findViewById(R.id.mid_panel);
-		ViewGroup bottomBar = findViewById(R.id.bottom_bar);
-
-
-		if (midPanel == null || bottomBar == null) {
-			Log.e("MainMenu", "One or more views are null!");
-			return; // Prevent further actions on null views
-		}
-
+	private void dataClicked() {
+		//clear crap
+		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
+		ViewGroup topBar = (ViewGroup) findViewById(R.id.top_bar);
+		ViewGroup bottomBar = (ViewGroup) findViewById(R.id.bottom_bar);
 		LayoutInflater inf = this.getLayoutInflater();
 
 		midPanel.removeAllViews();
+		topBar.removeAllViews();
+		bottomBar.removeAllViews();
 
-		inf.inflate(R.layout.status_screen, midPanel);
+		//main screen on
+		// Inflate top and bottom bars
+		inf.inflate(R.layout.data_bar_top, topBar, true);
+		inf.inflate(R.layout.data_bar_bottom, bottomBar, true);
+		// Inflate map_screen once
+		View mapScreenView = inf.inflate(R.layout.map_screen, midPanel, true);
+		FrameLayout mapContainer = mapScreenView.findViewById(R.id.map_container);
+
+//		ViewGroup midPanel = findViewById(R.id.mid_panel);
+//		ViewGroup topBar = findViewById(R.id.top_bar);
+//		ViewGroup bottomBar = findViewById(R.id.bottom_bar);
+
+		// Create the map fragment programmatically
+		SupportMapFragment mapFragment = SupportMapFragment.newInstance();
+		getSupportFragmentManager()
+				.beginTransaction()
+				.replace(mapContainer.getId(), mapFragment)
+				.commit();
+
+		// Ensure fragment is attached before requesting the map
+		getSupportFragmentManager().executePendingTransactions();
+		mapFragment.getMapAsync(this);
+		initCompassToggle();
+
+		// Button-ize the bottom bar buttons
+		VarVault.localMap = bottomBar.findViewById(R.id.btn_localmap);
+		VarVault.localMapLL = bottomBar.findViewById(R.id.btn_localmap_box);
+		VarVault.localMap.setTypeface(VarVault.font);
+		VarVault.localMapLL.setOnClickListener(this);
+
+		VarVault.worldMap = bottomBar.findViewById(R.id.btn_worldmap);
+		VarVault.worldMapLL = bottomBar.findViewById(R.id.btn_worldmap_box);
+		VarVault.worldMap.setTypeface(VarVault.font);
+		VarVault.worldMapLL.setOnClickListener(this);
+
+		VarVault.quests = bottomBar.findViewById(R.id.btn_quests);
+		VarVault.questsLL = bottomBar.findViewById(R.id.btn_quests_box);
+		VarVault.quests.setTypeface(VarVault.font);
+		VarVault.questsLL.setOnClickListener(this);
+
+		VarVault.notes = bottomBar.findViewById(R.id.btn_notes);
+		VarVault.notesLL = bottomBar.findViewById(R.id.btn_notes_box);
+		VarVault.notes.setTypeface(VarVault.font);
+		VarVault.notesLL.setOnClickListener(this);
+
+		VarVault.radio = bottomBar.findViewById(R.id.btn_radio);
+		VarVault.radioLL = bottomBar.findViewById(R.id.btn_radio_box);
+		VarVault.radio.setTypeface(VarVault.font);
+		VarVault.radioLL.setOnClickListener(this);
+
+	}
+
+
+	private void statusClicked() {
+
+		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
+		midPanel.removeAllViews();
+
+		LayoutInflater inf = this.getLayoutInflater();
+		inf.inflate(R.layout.status_screen, midPanel, true);
 
 		VarVault.title.setText("STATUS");
 
@@ -850,7 +709,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, V
 		}
 	}
 
-	private void skillStatClicked(View source) {
+	private void skillStatClicked (View source){
 
 		if (source == VarVault.bart || source == VarVault.barterSTAT)
 			VarVault.skillImage.setImageResource(R.drawable.barter);
@@ -880,7 +739,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, V
 			VarVault.skillImage.setImageResource(R.drawable.unarmed);
 	}
 
-	private void specialStatClicked(View source) {
+	private void specialStatClicked (View source){
 		if (source == VarVault.str)
 			VarVault.specialImage.setImageResource(R.drawable.strength);
 		else if (source == VarVault.per)
@@ -961,7 +820,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, V
 	}
 
 	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+	protected void onActivityResult ( int requestCode, int resultCode, Intent data){
 		super.onActivityResult(requestCode, resultCode, data);
 		if (requestCode == 0 && resultCode == RESULT_OK) {
 			SharedPreferences prefs = getSharedPreferences("SPECIAL", 0);
@@ -1005,57 +864,34 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, V
 			VarVault.isCamOn = false;
 		}
 		super.onPause();
-		sensorManager.unregisterListener(sensorEventListener);
 	}
 
 	// onResume()
 	protected void onResume() {
 		super.onResume();
-		sensorManager.registerListener(sensorEventListener, rotationSensor, SensorManager.SENSOR_DELAY_UI);
 		this.setVolumeControlStream(AudioManager.STREAM_MUSIC);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-		// Check if the map fragment is already added
 
+		// Recheck permissions on activity resume
+		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+			enableLocation();  // Enable location if permission is granted
+		}
 
 		// Clear crap
-
-		ViewGroup topBar = (ViewGroup) findViewById(R.id.top_bar);
-		// Check if topBar is null
-		if (topBar != null) {
-			topBar.removeAllViews();  // Proceed with removing all views safely
-		} else {
-			Log.e("onResume", "top_bar is null! Cannot remove views.");
-		}
-
 		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
-		// Check if midPanel is null
-		if (midPanel != null) {
-			midPanel.removeAllViews();  // Proceed with removing all views safely
-		} else {
-			Log.e("onResume", "midPanel is null! Cannot remove views.");
-		}
-
+		ViewGroup topBar = (ViewGroup) findViewById(R.id.top_bar);
 		ViewGroup bottomBar = (ViewGroup) findViewById(R.id.bottom_bar);
-		// Check if bottomBar is null
-		if (bottomBar != null) {
-			bottomBar.removeAllViews();  // Proceed with removing all views safely
-		} else {
-			Log.e("onResume", "bottom_bar is null! Cannot remove views.");
-		}
-
 		LayoutInflater inf = this.getLayoutInflater();
 
-		// Main screen turn on
+		midPanel.removeAllViews();
+		topBar.removeAllViews();
+		bottomBar.removeAllViews();
 
-		if (topBar != null) {
-			inf.inflate(R.layout.stats_bar_top, topBar, true);
-		}
-		if (midPanel != null) {
-			inf.inflate(R.layout.status_screen, midPanel, true);
-		}
-		if (bottomBar != null) {
-			inf.inflate(R.layout.stats_bar_bottom, bottomBar, true);
-		}
+		// Main screen turn on
+		inf.inflate(R.layout.status_screen, midPanel);
+		inf.inflate(R.layout.stats_bar_top, topBar);
+		inf.inflate(R.layout.stats_bar_bottom, bottomBar);
+
 		// Format top bar text
 		VarVault.title = (TextView) findViewById(R.id.title_stats);
 		VarVault.title.setText("STATUS");
@@ -1075,93 +911,51 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, V
 		// Button-ize the buttons
 		VarVault.status = (TextView) findViewById(R.id.btn_status);
 		VarVault.statusLL = (LinearLayout) findViewById(R.id.btn_status_box);
-
-		if (VarVault.status != null && VarVault.statusLL != null) {
-			VarVault.status.setTypeface(VarVault.font);
-			VarVault.status.setOnClickListener(this);
-			VarVault.statusLL.setOnClickListener(this);
-			VarVault.status.setTypeface(VarVault.font);
-		} else {
-			Log.e("onResume", "status or statusLL is null! Cannot set OnClickListener.");
-		}
+		VarVault.status.setTypeface(VarVault.font);
+		VarVault.status.setOnClickListener(this);
+		VarVault.statusLL.setOnClickListener(this);
 
 		VarVault.special = (TextView) findViewById(R.id.btn_special);
 		VarVault.specialLL = (LinearLayout) findViewById(R.id.btn_special_box);
-		if (VarVault.special != null && VarVault.specialLL != null) {
-			VarVault.special.setOnClickListener(this);
-			VarVault.specialLL.setOnClickListener(this);
-			VarVault.special.setTypeface(VarVault.font);
-		} else {
-			Log.e("onResume()", "special or specialLL is null! Cannot set OnClickListener.");
-		}
-
+		VarVault.special.setTypeface(VarVault.font);
+		VarVault.special.setOnClickListener(this);
+		VarVault.specialLL.setOnClickListener(this);
 
 		VarVault.skills = (TextView) findViewById(R.id.btn_skills);
 		VarVault.skillsLL = (LinearLayout) findViewById(R.id.btn_skills_box);
-		if (VarVault.skills != null && VarVault.skillsLL != null) {
-			VarVault.skills.setOnClickListener(this);
-			VarVault.skillsLL.setOnClickListener(this);
-			VarVault.skills.setTypeface(VarVault.font);
-		} else {
-			Log.e("onResume()", "skills or skillsLL is null! Cannot set OnClickListener.");
-		}
+		VarVault.skills.setTypeface(VarVault.font);
+		VarVault.skills.setOnClickListener(this);
+		VarVault.skillsLL.setOnClickListener(this);
 
 		VarVault.perks = (TextView) findViewById(R.id.btn_perks);
 		VarVault.perksLL = (LinearLayout) findViewById(R.id.btn_perks_box);
-
-		if (VarVault.perks != null && VarVault.perksLL != null) {
-			VarVault.perks.setOnClickListener(this);
-			VarVault.perksLL.setOnClickListener(this);
-			VarVault.perks.setTypeface(VarVault.font);
-		} else {
-			Log.e("onResume()", "perks or perksLL is null! Cannot set OnClickListener.");
-		}
-
+		VarVault.perks.setTypeface(VarVault.font);
+		VarVault.perks.setOnClickListener(this);
+		VarVault.perksLL.setOnClickListener(this);
 
 		VarVault.general = (TextView) findViewById(R.id.btn_general);
 		VarVault.generalLL = (LinearLayout) findViewById(R.id.btn_general_box);
-		if (VarVault.general != null && VarVault.generalLL != null) {
-			VarVault.general.setOnClickListener(this);
-			VarVault.generalLL.setOnClickListener(this);
-			VarVault.general.setTypeface(VarVault.font);
-		} else {
-			Log.e("onResume()", "general or generalLL is null! Cannot set OnClickListener.");
-		}
+		VarVault.general.setTypeface(VarVault.font);
+		VarVault.general.setOnClickListener(this);
+		VarVault.generalLL.setOnClickListener(this);
 
-		if (VarVault.cnd != null) {
-			VarVault.cnd.setOnClickListener(this);
-			VarVault.cnd = (TextView) findViewById(R.id.btn_cnd);
-			VarVault.cnd.setTypeface(VarVault.font);
-		} else {
-			Log.e("onResume()", "cnd or cndLL is null! Cannot set OnClickListener.");
-		}
+		VarVault.cnd = (TextView) findViewById(R.id.btn_cnd);
+		VarVault.cnd.setTypeface(VarVault.font);
+		VarVault.cnd.setOnClickListener(this);
 
-		if (VarVault.rad != null) {
-			VarVault.rad = (TextView) findViewById(R.id.btn_rad);
-			VarVault.rad.setTypeface(VarVault.font);
-			VarVault.rad.setOnClickListener(this);
-		} else {
-			Log.e("onResume()", "rad or radLL is null! Cannot set OnClickListener.");
-		}
-
+		VarVault.rad = (TextView) findViewById(R.id.btn_rad);
+		VarVault.rad.setTypeface(VarVault.font);
+		VarVault.rad.setOnClickListener(this);
 
 		VarVault.stimpak = (TextView) findViewById(R.id.btn_stimpak);
-		if (VarVault.stimpak != null) {
-			VarVault.stimpak.setOnClickListener(this);
-			VarVault.stimpak.setTypeface(VarVault.font);
-		} else {
-			Log.e("onResume()", "stimpak or stimpakLL is null! Cannot set OnClickListener.");
-		}
+		VarVault.stimpak.setTypeface(VarVault.font);
+		VarVault.stimpak.setOnClickListener(this);
 
 		VarVault.flashlight = (TextView) findViewById(R.id.btn_flashlight);
-		if (VarVault.flashlight != null) {
-			VarVault.flashlight.setOnClickListener(this);
-			VarVault.flashlight.setTypeface(VarVault.font);
-		} else {
-			Log.e("onResume()", "flashlight or flashlightLL is null! Cannot set OnClickListener.");
-		}
-	}
+		VarVault.flashlight.setTypeface(VarVault.font);
+		VarVault.flashlight.setOnClickListener(this);
 
+	}
 
 	protected void onDestroy() {
 		getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -1172,20 +966,35 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, V
 			VarVault.mCamera.stopPreview();
 			VarVault.mCamera.release();
 			VarVault.mCamera = null;
-			VarVault.isCamOn = false;} else {
-			Log.e("onDestroy()", "don't know what happens here");
+			VarVault.isCamOn = false;
 		}
-
 		this.unregisterReceiver(VarVault.mBatInfoReceiver);
 		super.onDestroy();
 	}
 
+	public void surfaceChanged (SurfaceHolder holder,int format, int width,
+								int height){
+	}
+
+	public void surfaceCreated (SurfaceHolder holder){
+		VarVault.mHolder = holder;
+		try {
+			VarVault.mCamera.setPreviewDisplay(VarVault.mHolder);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void surfaceDestroyed (SurfaceHolder holder){
+		VarVault.mCamera.stopPreview();
+		VarVault.mHolder = null;
+	}
 
 	private void populateOwnedWeapons() {
-		Log.e("populateOwnedWeapons()", "don't know what happens here");
+
 		// Open Database
 		dbHelper database = new dbHelper(MainMenu.this);
-		Log.d("PopulateOwnedWeapons", "new database");
+
 		Log.d("DB", "Getting a writable database...");
 		SQLiteDatabase db = database.getWritableDatabase();
 		Log.d("DB", "...writable database gotten!");
@@ -1199,7 +1008,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, V
 
 			String tempName = "";
 			int isWearing = 0;
-			Log.d("PopulateOwnedWeapons", "...looping through all weaponsssss!");
+
 			LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
 					LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
 			lp.setMargins(15, 0, 0, 15);
@@ -1207,7 +1016,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, V
 			isWearing = allWeapons.getInt(1);
 
 			VarVault.Weapons.add(i, new TextView(this));
-			Log.d("DB", "...writable database gotten!");
+
 			VarVault.Weapons.get(i).setLayoutParams(lp);
 			VarVault.Weapons.get(i).setTypeface(VarVault.font);
 			VarVault.Weapons.get(i).setTextSize((float) 22.0);
@@ -1272,8 +1081,8 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, V
 	}
 
 	public boolean onLongClick(View source) {
-		boolean result = false;
-		// TODO For Items, wear them.
+        boolean result = false;
+        // TODO For Items, wear them.
 		ContentValues values = new ContentValues();
 		ContentValues NOTvalues = new ContentValues();
 
@@ -1294,109 +1103,109 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, V
 			Cursor currentWeapon = db.query("OwnedWeapons", new String[]{dbHelper.colName, dbHelper.colIsWearing}, "WeaponName='" + clipped + "'", null, null, null, "_id");
 
 			if (currentWeapon.moveToFirst() != false) {
-				int isWearing = currentWeapon.getInt(1);
-				Log.d("DB", "...got the info!");
-				if (isWearing == 1) {
-					values.put(dbHelper.colIsWearing, 0);
-					NOTvalues.put(dbHelper.colIsWearing, 0);
-				} else {
-					values.put(dbHelper.colIsWearing, 1);
-					NOTvalues.put(dbHelper.colIsWearing, 0);
-				}
-				Log.d("DB", "Trying to update equip...");
-				db.update("OwnedWeapons", values, dbHelper.colName + "='" + clipped + "'", null);
-				db.update("OwnedWeapons", NOTvalues, dbHelper.colName + "<>'" + clipped + "'", null);
-				Log.d("DB", "...updated equipped status!");
-				Cursor allWeapons = db.query("OwnedWeapons", new String[]{dbHelper.colName, dbHelper.colIsWearing}, null, null, null, null, "_id");
-				allWeapons.moveToFirst();
-				for (int i = 0; !allWeapons.isAfterLast(); i++) {
+                int isWearing = currentWeapon.getInt(1);
+                Log.d("DB", "...got the info!");
+                if (isWearing == 1) {
+                    values.put(dbHelper.colIsWearing, 0);
+                    NOTvalues.put(dbHelper.colIsWearing, 0);
+                } else {
+                    values.put(dbHelper.colIsWearing, 1);
+                    NOTvalues.put(dbHelper.colIsWearing, 0);
+                }
+                Log.d("DB", "Trying to update equip...");
+                db.update("OwnedWeapons", values, dbHelper.colName + "='" + clipped + "'", null);
+                db.update("OwnedWeapons", NOTvalues, dbHelper.colName + "<>'" + clipped + "'", null);
+                Log.d("DB", "...updated equipped status!");
+                Cursor allWeapons = db.query("OwnedWeapons", new String[]{dbHelper.colName, dbHelper.colIsWearing}, null, null, null, null, "_id");
+                allWeapons.moveToFirst();
+                for (int i = 0; !allWeapons.isAfterLast(); i++) {
 
-					String temp = allWeapons.getString(0);
-					int ruWear = allWeapons.getInt(1);
+                    String temp = allWeapons.getString(0);
+                    int ruWear = allWeapons.getInt(1);
 
-					if (ruWear == 1)
-						VarVault.Weapons.get(i).setText("\u25a0 " + temp);
-					else
-						VarVault.Weapons.get(i).setText("  " + temp);
+                    if (ruWear == 1)
+                        VarVault.Weapons.get(i).setText("\u25a0 " + temp);
+                    else
+                        VarVault.Weapons.get(i).setText("  " + temp);
 
-					allWeapons.moveToNext();
-				}
-				updateWG();
-				result = true;
-			}
-
-
-		} else if (VarVault.Apparel.contains(source)) {
-			dbHelper database = new dbHelper(MainMenu.this);
-
-			Log.d("DB", "Getting a writable database...");
-			SQLiteDatabase db = database.getWritableDatabase();
-			Log.d("DB", "...writable database gotten!");
-
-			Log.d("DB", "Querying DB's current status...");
-
-			String clipped = (String) VarVault.Apparel.get(VarVault.Apparel.indexOf(source)).getText();
-			clipped = clipped.replace('\u25a0', ' ');
-			clipped = clipped.replaceAll("^\\s+", "");
+                    allWeapons.moveToNext();
+                }
+                updateWG();
+                result = true;
+            }
 
 
-			Cursor currentApparel = db.query("OwnedApparel", new String[]{dbHelper.colName, dbHelper.colType, dbHelper.colIsWearing}, "WeaponName='" + clipped + "'", null, null, null, "_id");
+        } else if (VarVault.Apparel.contains(source)) {
+            dbHelper database = new dbHelper(MainMenu.this);
 
-			if (currentApparel.moveToFirst() != false) {
-				int type = currentApparel.getInt(1);
-				int isWearing = currentApparel.getInt(2);
-				Log.d("DB", "...got the info!");
-				if (isWearing == 1) {
-					values.put(dbHelper.colIsWearing, 0);
-					NOTvalues.put(dbHelper.colIsWearing, 0);
-				} else {
-					values.put(dbHelper.colIsWearing, 1);
-					NOTvalues.put(dbHelper.colIsWearing, 0);
-				}
-				Log.d("DB", "Trying to update wear...");// Update wear based on type
-				switch (type) {
+            Log.d("DB", "Getting a writable database...");
+            SQLiteDatabase db = database.getWritableDatabase();
+            Log.d("DB", "...writable database gotten!");
 
-					case 1:
-						db.update("OwnedApparel", values, dbHelper.colName + "='" + clipped + "' AND " + dbHelper.colType + "=" + 1, null);
-						db.update("OwnedApparel", NOTvalues, dbHelper.colName + "<>'" + clipped + "' AND (" + dbHelper.colType + "=" + 1 + " OR " + dbHelper.colType + "=" + 3 + ")", null);
-						break;
-					case 2:
-						db.update("OwnedApparel", values, dbHelper.colName + "='" + clipped + "' AND " + dbHelper.colType + "=" + 2, null);
-						db.update("OwnedApparel", NOTvalues, dbHelper.colName + "<>'" + clipped + "' AND (" + dbHelper.colType + "=" + 2 + " OR " + dbHelper.colType + "=" + 3 + ")", null);
-						break;
-					case 3:
-						db.update("OwnedApparel", values, dbHelper.colName + "='" + clipped + "' AND " + dbHelper.colType + "=" + 3, null);
-						db.update("OwnedApparel", NOTvalues, dbHelper.colName + "<>'" + clipped + "' AND (" + dbHelper.colType + "=" + 1 + " OR " + dbHelper.colType + "=" + 2 + " OR " + dbHelper.colType + "=" + 3 + ")", null);
-						break;
-					case 4:
-						db.update("OwnedApparel", values, dbHelper.colName + "='" + clipped + "' AND " + dbHelper.colType + "=" + 4, null);
-						db.update("OwnedApparel", NOTvalues, dbHelper.colName + "<>'" + clipped + "' AND " + dbHelper.colType + "=" + 4, null);
-						break;
-				}
-				Log.d("DB", "...updated wear status!");
-				Cursor allApparel = db.query("OwnedApparel", new String[]{dbHelper.colName, dbHelper.colIsWearing}, null, null, null, null, "_id");
-				allApparel.moveToFirst();
-				for (int i = 0; !allApparel.isAfterLast(); i++) {
+            Log.d("DB", "Querying DB's current status...");
 
-					String temp = allApparel.getString(0);
-					int ruWear = allApparel.getInt(1);
-
-					if (ruWear == 1)
-						VarVault.Apparel.get(i).setText("\u25a0 " + temp);
-					else
-						VarVault.Apparel.get(i).setText("  " + temp);
-
-					allApparel.moveToNext();
-				}
-				updateWG();
-				result = true;
-			}
+            String clipped = (String) VarVault.Apparel.get(VarVault.Apparel.indexOf(source)).getText();
+            clipped = clipped.replace('\u25a0', ' ');
+            clipped = clipped.replaceAll("^\\s+", "");
 
 
-		}
+            Cursor currentApparel = db.query("OwnedApparel", new String[]{dbHelper.colName, dbHelper.colType, dbHelper.colIsWearing}, "WeaponName='" + clipped + "'", null, null, null, "_id");
 
-		return result;
-	}
+            if (currentApparel.moveToFirst() != false) {
+                int type = currentApparel.getInt(1);
+                int isWearing = currentApparel.getInt(2);
+                Log.d("DB", "...got the info!");
+                if (isWearing == 1) {
+                    values.put(dbHelper.colIsWearing, 0);
+                    NOTvalues.put(dbHelper.colIsWearing, 0);
+                } else {
+                    values.put(dbHelper.colIsWearing, 1);
+                    NOTvalues.put(dbHelper.colIsWearing, 0);
+                }
+                Log.d("DB", "Trying to update wear...");// Update wear based on type
+                switch (type) {
+
+                    case 1:
+                        db.update("OwnedApparel", values, dbHelper.colName + "='" + clipped + "' AND " + dbHelper.colType + "=" + 1, null);
+                        db.update("OwnedApparel", NOTvalues, dbHelper.colName + "<>'" + clipped + "' AND (" + dbHelper.colType + "=" + 1 + " OR " + dbHelper.colType + "=" + 3 + ")", null);
+                        break;
+                    case 2:
+                        db.update("OwnedApparel", values, dbHelper.colName + "='" + clipped + "' AND " + dbHelper.colType + "=" + 2, null);
+                        db.update("OwnedApparel", NOTvalues, dbHelper.colName + "<>'" + clipped + "' AND (" + dbHelper.colType + "=" + 2 + " OR " + dbHelper.colType + "=" + 3 + ")", null);
+                        break;
+                    case 3:
+                        db.update("OwnedApparel", values, dbHelper.colName + "='" + clipped + "' AND " + dbHelper.colType + "=" + 3, null);
+                        db.update("OwnedApparel", NOTvalues, dbHelper.colName + "<>'" + clipped + "' AND (" + dbHelper.colType + "=" + 1 + " OR " + dbHelper.colType + "=" + 2 + " OR " + dbHelper.colType + "=" + 3 + ")", null);
+                        break;
+                    case 4:
+                        db.update("OwnedApparel", values, dbHelper.colName + "='" + clipped + "' AND " + dbHelper.colType + "=" + 4, null);
+                        db.update("OwnedApparel", NOTvalues, dbHelper.colName + "<>'" + clipped + "' AND " + dbHelper.colType + "=" + 4, null);
+                        break;
+                }
+                Log.d("DB", "...updated wear status!");
+                Cursor allApparel = db.query("OwnedApparel", new String[]{dbHelper.colName, dbHelper.colIsWearing}, null, null, null, null, "_id");
+                allApparel.moveToFirst();
+                for (int i = 0; !allApparel.isAfterLast(); i++) {
+
+                    String temp = allApparel.getString(0);
+                    int ruWear = allApparel.getInt(1);
+
+                    if (ruWear == 1)
+                        VarVault.Apparel.get(i).setText("\u25a0 " + temp);
+                    else
+                        VarVault.Apparel.get(i).setText("  " + temp);
+
+                    allApparel.moveToNext();
+                }
+                updateWG();
+                result = true;
+            }
+
+
+        }
+
+        return result;
+    }
 
 	private void updateWG() {
 
@@ -1446,113 +1255,63 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, V
 		VarVault.caps.setText("Caps: " + VarVault.curCaps.getValue());
 	}
 
-	protected boolean isRouteDisplayed() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
 	@SuppressLint("MissingPermission")
 	@Override
-	public void onMapReady(GoogleMap googleMap) {
-		mMap = googleMap;
-		Log.e("onMapReady", "just initialized mMap");
-		// Configure map visuals
-		Log.e("Map Styling", "configureMapSettings()");
-		configureMapSettings();
+	public void onMapReady(GoogleMap mMap) {
 
-		Log.e("Map Styling", "triggering applyMapStyle()");
-		applyMapStyle();
+		// ===== Map visuals =====
+		mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+//		mMap.getUiSettings().setMapToolbarEnabled(false);
+		mMap.setBuildingsEnabled(false);
+		mMap.getUiSettings().setCompassEnabled(false);
+		mMap.getUiSettings().setMapToolbarEnabled(false);
 
-		// Set initial camera position to current location if available
-		Log.e("location", "setInitialCameraPosition()");
 
-		// Store map for later use
-		VarVault.mMap = mMap;
 
-		// Enable location if permission granted
-		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-			mMap.setMyLocationEnabled(true);
-			Log.e("location", "setMyLocationEnabled(true)");
+
+		mMap.getUiSettings().setIndoorLevelPickerEnabled(false);
+
+		try {
+			MapStyleOptions style = MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style);
+			boolean success = mMap.setMapStyle(style);
+			Log.d("MapStyle", "JSON Map style applied: " + success);
+		} catch (Resources.NotFoundException e) {
+			Log.e("MapStyle", "Style JSON not found!", e);
+		}
+
+		// ===== Location permissions =====
+		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+				== PackageManager.PERMISSION_GRANTED) {
+			mMap.setMyLocationEnabled(VarVault.setMyLocationEnabledBool);
+			//then
+			mMap.getUiSettings().setMyLocationButtonEnabled(VarVault.setMyLocationButtonEnabledBool);
+
+			// Get last known location safely
+			FusedLocationProviderClient fusedLocationClient =
+					LocationServices.getFusedLocationProviderClient(this);
+
+			fusedLocationClient.getLastLocation()
+					.addOnSuccessListener(location -> {
+						if (location != null) {
+							LatLng playerLatLng = new LatLng(
+									location.getLatitude(),
+									location.getLongitude()
+							);
+							VarVault.playerLocation = playerLatLng;
+						}
+					});
 
 		} else {
 			requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
-			Log.e("location", "requestpermissionlauncher)");
 		}
+
+		// Store map for later use
+		VarVault.mMap = mMap;
+		// Now the map is ready, you can enable location safely
+		enableLocation();
 	}
 
-	private void applyMapStyle() {
-		Log.e("Map Styling", "starting now.");
-		try {
-			boolean success = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style));
-			if (!success) {
-				Log.e("Map Styling", "Style parsing failed.");
-			} else {
-				Log.d("MapStyling", "Map style applied successfully.");
-			}
-		} catch (Resources.NotFoundException e) {
-			Log.e("Map Styling", "Can't find style. Error: ", e);
-		}
-	}
-
-	private void configureMapSettings() {
-		// Set map type and UI settings
-		mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-		Log.e("Configure Map Settings", "setMapType MAP_TYPE_NORMAL");
-		mMap.getUiSettings().setMapToolbarEnabled(false);  // Disable map toolbar
-		Log.e("Configure Map Settings", "sidable toolbar");
-		mMap.setBuildingsEnabled(false);  // Disable 3D buildings
-		Log.e("Configure Map Settings", "disable 3D buildings");
-		mMap.setIndoorEnabled(true);
-		mMap.setTrafficEnabled(false);
-		// Enable gestures
-//		mMap.getUiSettings().setRotateGesturesEnabled(false);  // Disable rotation
-//		Log.e("Configure Map Settings", "disable rotation");
-		mMap.getUiSettings().setTiltGesturesEnabled(false);    // Disable tilt gestures
-		Log.e("Configure Map Settings", "disable tilt");
-
-		// Enable compass and disable zoom controls
-//		mMap.getUiSettings().setCompassEnabled(true);
-//		Log.e("Configure Map Settings", "set compass enabled");
-		mMap.getUiSettings().setZoomControlsEnabled(false);
-		Log.e("Configure Map Settings", "set zoom controls disabled");
-		mMap.getUiSettings().setMyLocationButtonEnabled(false);
-//		mMap.getUiSettings().setAllGesturesEnabled(false);
-	}
-
-	// This method ensures the map is centered around the player's location
-	private void setInitialCameraPosition(float zoomLevel) {
-		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-
-			FusedLocationProviderClient fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-			fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
-				if (location != null && mMap != null) {
-					LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-					VarVault.playerLocation = currentLocation;
-
-					CameraPosition position = new CameraPosition.Builder()
-							.target(currentLocation)
-							.zoom(zoomLevel)// Decide zoom level based on parameter
-							.bearing(0)
-							.tilt(0)
-							.build();
-
-					mMap.animateCamera(CameraUpdateFactory.newCameraPosition(position), 600, null);
-
-					Log.d("Map", "Camera centered at " + currentLocation + " with zoom " + zoomLevel);
-				} else if (location == null) {
-					Log.e("Map", "Location is null");
-				} else if (mMap == null) {
-					Log.e("Map", "mMap is null");
-				}
-			});
-		} else {
-			Log.e("Map", "Location permission not granted");
-		}
-	}
-
-
-
-	private void enableLocation(float zoomLevel) {
+	private void enableLocation() {
 		FusedLocationProviderClient fusedLocationClient =
 				LocationServices.getFusedLocationProviderClient(this);
 
@@ -1570,38 +1329,44 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, V
 		if (mMap == null) {
 			return;
 		}
+
+		// Enable location layer
 		try {
 			mMap.setMyLocationEnabled(true);
 			mMap.getUiSettings().setMyLocationButtonEnabled(true);
 		} catch (SecurityException e) {
-			// Get last known location
-			fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
-				if (location == null) {
-					Toast.makeText(
-							MainMenu.this,
-							"Unable to get current location",
-							Toast.LENGTH_SHORT
-					).show();
-					return;
-				}
-				VarVault.playerLocation = new LatLng(location.getLatitude(), location.getLongitude());
+			// Safety net
+			return;
+		}
 
-				// Move the camera
-				if (mMap != null) {
+		// Get last known location
+		fusedLocationClient.getLastLocation()
+				.addOnSuccessListener(this, location -> {
+					if (location == null) {
+						Toast.makeText(MainMenu.this,
+								"Unable to get current location",
+								Toast.LENGTH_SHORT).show();
+						return;
+					}
+
+					LatLng currentLocation =
+							new LatLng(location.getLatitude(),
+									location.getLongitude());
+
+					mMap.clear();
+					mMap.addMarker(new MarkerOptions()
+							.position(currentLocation)
+							.title("You are here"));
+
 					mMap.moveCamera(
 							CameraUpdateFactory.newLatLngZoom(
-									VarVault.playerLocation,
-									zoomLevel
-							)
-					);
-				}
-			});
-
-		}
+									currentLocation, 15));
+				});
 	}
-
+	private static final float WORLD_MAP_ZOOM = 13.5f; // city-wide
+	private static final float LOCAL_MAP_ZOOM = 16.5f; // nearby streets
 	@Override
-	public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+	public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults){
 		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
 		if (requestCode == 1) {
@@ -1612,217 +1377,45 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, V
 				Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
 			}
 		}
-		if (requestCode == 1) {
-			if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-				// Permission granted, proceed with accessing contacts
-//				accessContacts();
-			} else {
-				// Permission denied, show a message to the user
-				Toast.makeText(this, "Permission denied to read contacts", Toast.LENGTH_SHORT).show();
-			}
-		}
 	}
-
 	private void moveCamera(LatLng target, float zoom) {
 		if (VarVault.mMap == null || target == null) return;
 
 		CameraUpdate update = CameraUpdateFactory.newLatLngZoom(target, zoom);
-		VarVault.mMap.animateCamera(update, 600, null);
+		VarVault.mMap.animateCamera(update, 600, null); // smooth CRT-style move
 	}
-
 	private void showWorldMap() {
-		if (VarVault.mMap == null || VarVault.playerLocation == null) {
-			Log.w("Map", "Player location or map is not ready.");
+		GoogleMap map = VarVault.mMap;
+		LatLng player = VarVault.playerLocation;
+
+		if (map == null) return;
+		if (player == null) {
+			Log.w("Map", "Player location not ready yet");
 			return;
 		}
-		// Check if the location permission is granted
-		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-				== PackageManager.PERMISSION_GRANTED) {
-			// Permission granted, enable location
-			enableLocation(VarVault.WORLD_MAP_ZOOM);
-		} else {
-			// Permission not granted, request it
-			requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
-		}
-		// Ensure my location button is enabled
-		VarVault.mMap.setMyLocationEnabled(true);
 
-		// Set the camera update with zoom and animate the movement
-		VarVault.mMap.animateCamera(
-				CameraUpdateFactory.newLatLngZoom(VarVault.playerLocation, zoomLevel),
-				600,
-				null
-		);
+		CameraUpdate update = CameraUpdateFactory.newLatLngZoom(player, WORLD_MAP_ZOOM);
 
-		// Optional: Log position when the camera has stopped moving
-		VarVault.mMap.setOnCameraIdleListener(() -> {
-			LatLng cameraPosition = VarVault.mMap.getCameraPosition().target;
-			Log.d("Map", "Camera position is: " + cameraPosition);
+		// Animate safely with duration + callback
+		map.animateCamera(update, 600, new GoogleMap.CancelableCallback() {
+			@Override
+			public void onFinish() { }
+			@Override
+			public void onCancel() { }
 		});
-
 	}
-
 	private void showLocalMap() {
-		if (VarVault.mMap == null || VarVault.playerLocation == null) {
-			Log.w("Map", "Player location or map is not ready.");
-			return;
-		}
-		// Check if the location permission is granted
-		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-				== PackageManager.PERMISSION_GRANTED) {
-			// Permission granted, enable location
-			enableLocation(VarVault.LOCAL_MAP_ZOOM);
-		} else {
-			// Permission not granted, request it
-			requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
-		}
-		// Ensure my location button is enabled
-		VarVault.mMap.setMyLocationEnabled(true);
+		if (VarVault.mMap == null || VarVault.playerLocation == null) return;
 
-		// Set the camera update with zoom and animate the movement
 		VarVault.mMap.animateCamera(
-				CameraUpdateFactory.newLatLngZoom(VarVault.playerLocation, zoomLevel),
+				CameraUpdateFactory.newLatLngZoom(
+						VarVault.playerLocation,
+						LOCAL_MAP_ZOOM
+				),
 				600,
 				null
 		);
-
-		// Optional: Log position when the camera has stopped moving
-		VarVault.mMap.setOnCameraIdleListener(() -> {
-			LatLng cameraPosition = VarVault.mMap.getCameraPosition().target;
-			Log.d("Map", "Camera position is: " + cameraPosition);
-		});
 	}
-
-	private final SensorEventListener sensorEventListener = new SensorEventListener() {
-		@Override
-		public void onSensorChanged(SensorEvent event) {
-			if (mMap == null) return;
-
-			SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values);
-			SensorManager.getOrientation(rotationMatrix, orientation);
-			float azimuthInRadians = orientation[0];
-			float azimuthInDegrees = (float) Math.toDegrees(azimuthInRadians);
-			azimuthInDegrees = (azimuthInDegrees + 360) % 360;
-
-			// Update camera bearing to match compass
-			CameraPosition currentPos = mMap.getCameraPosition();
-			CameraPosition camPos = new CameraPosition.Builder(currentPos)
-					.bearing(azimuthInDegrees)
-					.tilt(0)  // keep top-down
-					.build();
-//			mMap.moveCamera(CameraUpdateFactory.newCameraPosition(camPos));
-		}
-
-		@Override
-		public void onAccuracyChanged(Sensor sensor, int accuracy) {
-		}
-	};
-
-	public void onSensorChanged(SensorEvent event) {
-		if (!isCompassModeEnabled) return;
-		if (mMap == null || VarVault.playerLocation == null) return;
-
-		SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values);
-		SensorManager.getOrientation(rotationMatrix, orientation);
-
-		float azimuth = (float) Math.toDegrees(orientation[0]);
-		azimuth = (azimuth + 360) % 360;
-
-		CameraPosition camPos = new CameraPosition.Builder()
-				.target(VarVault.playerLocation)
-				.zoom(mMap.getCameraPosition().zoom)
-				.bearing(azimuth)
-				.tilt(0)
-				.build();
-
-		mMap.moveCamera(CameraUpdateFactory.newCameraPosition(camPos));
-	}
-
-	private void updateCompassIcon() {
-		compassToggle.setAlpha(isCompassModeEnabled ? 1.0f : 0.4f);
-	}
-
-	//unused but appaerently useful?
-	private void loadMapFragmentOnMapReady() {
-
-		SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-				.findFragmentByTag("MAP_FRAGMENT_TAG");
-
-		if (mapFragment == null) {
-			mapFragment = SupportMapFragment.newInstance();
-			getSupportFragmentManager().beginTransaction()
-					.replace(R.id.map_fragment_container, mapFragment, "MAP_FRAGMENT_TAG")
-					.commit();
-			Log.e("MapFragment", "Map fragment created and added.");
-		} else {
-			Log.e("MapFragment", "Map fragment already exists, replacing.");
-			getSupportFragmentManager().beginTransaction()
-					.replace(R.id.map_fragment_container, mapFragment, "MAP_FRAGMENT_TAG")
-					.commit();
-		}
-
-
-		mapFragment.getMapAsync(this);
-
-		ViewGroup mapFragmentContainer = findViewById(R.id.map_fragment_container);
-		if (mapFragmentContainer == null) {
-			Log.e("MapFragment", "mapFragmentContainer is not found.");
-			return;
-		}
-		// Ensure bottom bar is on top and clickable
-		ViewGroup bottomBar = findViewById(R.id.bottom_panel);
-		if (bottomBar != null) bottomBar.bringToFront();
-	}
-
-
-	private void initializeMenuButtons() {
-		// Initialize the "Stats" button
-		VarVault.stats = findViewById(R.id.left_stats);
-		TextView statsText = findViewById(R.id.left_button_stats);
-		statsText.setTypeface(VarVault.font);
-		statsText.setTextColor(Color.argb(100, 255, 225, 0));
-		VarVault.stats.setOnClickListener(this);
-
-		// Initialize the "Items" button
-		VarVault.items = findViewById(R.id.left_items);
-		TextView itemsText = findViewById(R.id.left_button_items);
-		itemsText.setTypeface(VarVault.font);
-		itemsText.setTextColor(Color.argb(100, 255, 225, 0));
-		VarVault.items.setOnClickListener(this);
-
-		// Initialize the "Data" button
-		VarVault.data = findViewById(R.id.left_data);
-		TextView dataText = findViewById(R.id.left_button_data);
-		dataText.setTypeface(VarVault.font);
-		dataText.setTextColor(Color.argb(100, 255, 225, 0));
-		VarVault.data.setOnClickListener(this);
-		// For STATS button
-		TextView statsButton = findViewById(R.id.left_button_stats);
-		if (statsButton != null) {
-			statsButton.setTypeface(VarVault.font);  // Reapply the font
-			statsButton.setTextColor(Color.argb(100, 255, 225, 0));  // Ensure the text color is correct
-		}
-
-		// For ITEMS button
-		TextView itemsButton = findViewById(R.id.left_button_items);
-		if (itemsButton != null) {
-			itemsButton.setTypeface(VarVault.font);  // Reapply the font
-			itemsButton.setTextColor(Color.argb(100, 255, 225, 0));  // Ensure the text color is correct
-		}
-
-		// For DATA button
-		TextView dataButton = findViewById(R.id.left_button_data);
-		if (dataButton != null) {
-			dataButton.setTypeface(VarVault.font);  // Reapply the font
-			dataButton.setTextColor(Color.argb(100, 255, 225, 0));  // Ensure the text color is correct
-		}
-
-		// Step 4: Check permissions and enable location if necessary
-		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-			enableLocation(zoomLevel);  // Enable location if permission is granted
-		}
-	}
-
 	private void recenterMap(float zoom) {
 		if (mMap == null || VarVault.playerLocation == null) return;
 
@@ -1857,18 +1450,18 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, V
 		);
 	}
 
-	ImageButton compassToggle;
 
-	public void initCompassToggle(View view) {
 
+	public void initCompassToggle() {
 		compassToggle = findViewById(R.id.btnCompassToggle);
+
 		Log.e("Compass", "btn parent=" + compassToggle.getParent());
 		Log.e("Compass", "Compass attached = " + compassToggle.isAttachedToWindow());
 		// Safety checks
 		compassToggle.setClickable(true);
 		compassToggle.setFocusable(true);
 		compassToggle.bringToFront();
-
+		compassToggle.setElevation(100f);
 //		compassToggle.invalidate();
 
 		// TAP
@@ -1886,36 +1479,42 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, V
 		// LONG PRESS
 		compassToggle.setOnLongClickListener(v -> {
 			if (mMap != null) {
-				mMap.getUiSettings().setRotateGesturesEnabled(true);
+				UiSettings ui = mMap.getUiSettings();
+				ui.setRotateGesturesEnabled(true);
+				ui.setCompassEnabled(false);
+
 				if (VarVault.playerLocation != null) {
 					mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
 							VarVault.playerLocation, zoomLevel
 					));
-					Log.d("Compass", "Rotation ENABLED and map centered (long press)");
-				} else {
-					Log.d("Compass", "Player location not ready yet");
 				}
 			}
 			v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
 			return true;
 		});
 
+
 		// TOUCH (release only)
 		compassToggle.setOnTouchListener((v, event) -> {
-			switch (event.getAction()) {
-				case MotionEvent.ACTION_UP:
-				case MotionEvent.ACTION_CANCEL:
-					Log.d("Compass", "RELEASE");
-					if (mMap != null) {
-						mMap.getUiSettings().setRotateGesturesEnabled(false);
-					}
-					if (!isCompassModeEnabled) {
-						lockMapNorth();
-					}
-					break;
-			}
-			return false; // VERY IMPORTANT
-		});
-	}
+			if (event.getAction() == MotionEvent.ACTION_UP ||
+					event.getAction() == MotionEvent.ACTION_CANCEL) {
 
+				if (mMap != null) {
+					UiSettings ui = mMap.getUiSettings();
+					ui.setRotateGesturesEnabled(false);
+					ui.setCompassEnabled(false);
+				}
+
+				if (!isCompassModeEnabled) {
+					lockMapNorth();
+				}
+			}
+			return false;
+		});
+
+	}
+	private void updateCompassIcon() {
+		compassToggle.setAlpha(isCompassModeEnabled ? 1.0f : 0.4f);
+	}
 }
+

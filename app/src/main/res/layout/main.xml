@@ -5,8 +5,7 @@
     android:layout_height="match_parent"
     android:baselineAligned="false"
     android:orientation="horizontal" >
-    
-
+    
     <SurfaceView
         android:id="@+id/PREVIEW"
         android:layout_width="1dip"
@@ -43,9 +42,7 @@
             android:layout_weight="0.3"
             android:gravity="center"
             android:orientation="vertical">
-            
-
-
+            
             <TextView
                 android:id="@+id/left_button_stats"
                 android:layout_width="wrap_content"
@@ -176,8 +173,7 @@
                 android:layout_alignParentRight="true"
                 android:layout_marginRight="10dip"
                 android:src="@drawable/bottom_right" />
-
-
+
             <LinearLayout
                 android:id="@+id/bottom_bar"
                 android:layout_width="fill_parent"
@@ -198,10 +194,7 @@
             android:layout_above="@+id/bottom_panel"
             android:layout_below="@+id/top_panel"
             android:orientation="horizontal" >
-            <FrameLayout
-                    android:id="@+id/map_fragment_container"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"/>
+            
         </LinearLayout>
     </RelativeLayout>
 

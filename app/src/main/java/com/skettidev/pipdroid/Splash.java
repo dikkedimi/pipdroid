@@ -1,5 +1,4 @@
 package com.skettidev.pipdroid;
-import com.skettidev.pipdroid.utils.PermissionManager;
 
 import android.Manifest;
 import android.animation.ObjectAnimator;
@@ -16,8 +15,9 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import java.util.List;
-import java.util.ArrayList;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
 public class Splash extends AppCompatActivity implements View.OnClickListener {
 
@@ -30,6 +30,25 @@ public class Splash extends AppCompatActivity implements View.OnClickListener {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		// Allow content behind system bars
+//		WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+
+		// Hide system bars
+		WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+
+		// Hide system bars
+		WindowInsetsControllerCompat controller =
+				new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView());
+
+		controller.hide(
+				WindowInsetsCompat.Type.statusBars()
+//						| WindowInsetsCompat.Type.navigationBars()
+		);
+
+		// Allow swipe to show bars temporarily
+		controller.setSystemBarsBehavior(
+				WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+		);
 		setContentView(R.layout.splash);
 
 		// Initialize media player
@@ -80,7 +99,6 @@ public class Splash extends AppCompatActivity implements View.OnClickListener {
 		swing.setDuration(400);
 		swing.start();
 	}
-
 	private void onPermissionsGranted() {
 		// Start MainMenu or other setup
 		Intent i = new Intent(Splash.this, MainMenu.class);
@@ -119,22 +137,15 @@ public class Splash extends AppCompatActivity implements View.OnClickListener {
 				Manifest.permission.ACCESS_FINE_LOCATION
 		};
 
-		// Request permissions that are not granted
-		List<String> permissionsToRequest = new ArrayList<>();
 		for (String perm : permissions) {
 			if (ContextCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {
-				permissionsToRequest.add(perm);
+				ActivityCompat.requestPermissions(this, permissions, 1);
+				return; // request once; user will be prompted
 			}
 		}
 
-		// If there's any permission left to request, request them
-		if (!permissionsToRequest.isEmpty()) {
-			ActivityCompat.requestPermissions(this,
-					permissionsToRequest.toArray(new String[0]), 1);
-		} else {
-			// If all permissions are already granted
-			onPermissionsGranted();
-			PermissionManager.getInstance().setPermissionsGranted(true);
-		}
+		// All permissions granted → proceed
+		onPermissionsGranted();
 	}
 }
+

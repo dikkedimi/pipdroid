@@ -1,23 +1,23 @@
-<?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/map_screen_layout"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    tools:context=".MapScreenActivity"
     android:layout_height="match_parent">
-        <FrameLayout
-        android:id="@+id/map_fragment_container"
+
+    <!-- Map container for programmatically added fragment -->
+    <FrameLayout
+        android:id="@+id/map_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
-        <ImageButton
-        android:id="@+id/btnCompassToggle"
-        android:focusableInTouchMode="true"
-        android:clickable="true"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_margin="12dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:src="@android:drawable/ic_menu_compass"
-        android:contentDescription="Toggle compass"
-        android:layout_gravity="top|end" />
-</FrameLayout>
+        android:layout_height="match_parent" />
+    <ImageButton
+            android:id="@+id/btnCompassToggle"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_margin="12dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_compass"
+            android:contentDescription="Toggle compass"
+
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:focusable="true"
+            android:clickable="true"/>
+</RelativeLayout>
