@@ -144,16 +144,13 @@
                 android:src="@drawable/top_right" />
 
             <LinearLayout
-                android:id="@+id/top_bar"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_toLeftOf="@+id/top_right"
-                android:layout_toRightOf="@+id/top_left"
-                android:background="@drawable/top_bar"
-                android:orientation="vertical" >
-                <include layout="@layout/data_bar_top"/>
-            </LinearLayout>
-            
+                    android:id="@+id/top_bar"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_toLeftOf="@id/top_right"
+                    android:layout_toRightOf="@id/top_left"
+                    android:background="@drawable/top_bar"
+                    android:orientation="vertical"/>
         </RelativeLayout>
 
         <RelativeLayout
@@ -180,19 +177,26 @@
 
 
             <LinearLayout
-                android:id="@+id/bottom_bar"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_toLeftOf="@+id/bottom_right"
-                android:layout_toRightOf="@+id/bottom_left"
-                android:background="@drawable/bottom_bar"
-                android:gravity="bottom|center"
-                android:orientation="horizontal" >
-                <include layout="@layout/data_bar_bottom"/>
-            </LinearLayout>
+                    android:id="@+id/bottom_bar"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_toLeftOf="@id/bottom_right"
+                    android:layout_toRightOf="@id/bottom_left"
+                    android:background="@drawable/bottom_bar"
+                    android:gravity="center"
+                    android:orientation="horizontal"/>
 
         </RelativeLayout>
-        <include layout="@layout/map_screen"/>
+        <RelativeLayout
+                android:id="@+id/data_content"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_below="@id/top_panel"
+                android:layout_above="@id/bottom_panel">
+
+            <include layout="@layout/map_screen"/>
+
+        </RelativeLayout>
 
 </RelativeLayout>
 

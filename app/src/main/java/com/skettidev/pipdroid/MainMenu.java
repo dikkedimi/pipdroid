@@ -70,7 +70,10 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 
 
 	//private vars
-	public static GoogleMap mMap;
+	private View mapView;
+	private View radioView;
+	private ViewGroup midPanel;
+
 	private boolean isCompassModeEnabled = false;
 	//sloppy fix. refactor.
 	private boolean isMapRotationEnabled; // add this as a field
@@ -106,7 +109,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 	private float[] rotationMatrix = new float[9];
 	private float[] orientation = new float[3];
 	private float azimuthDeg;
-
+	public static GoogleMap mMap;
 	private final ActivityResultLauncher<String> requestPermissionLauncher =
 			registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
 				if (isGranted) {
@@ -144,10 +147,12 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 				WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
 		);
 		setContentView(R.layout.main);
-
+// initialize panels
+		midPanel = findViewById(R.id.mid_panel);
 
 		// ===== Initialize sound =====
 		HandleSound.initSound(this.getApplicationContext());
+		// ===== Initialize ExoPlayer =====
 		exoPlayer = new ExoPlayer.Builder(this).build();
 
 		// 3Prepare and play a stream
@@ -158,7 +163,8 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 
 		RadioStation station;
 		MediaItem mediaItem = fromUri(currentStation.getStreamUrl());
-		exoPlayer.setMediaItem(MediaItem.fromUri(String.valueOf(currentStation)));
+		exoPlayer.setMediaItem(MediaItem.fromUri(currentStation.getStreamUrl()));
+
 
 
 		exoPlayer.prepare();
@@ -209,7 +215,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		currentStation = radioStation;
 		playStream(radioStation);
 		startNowPlayingPolling(radioStation.getNowPlayingUrl());
-
+		showRadio();
 		// Update selection safely — adapter is already initialized
 		if (radioAdapter != null) {
 			radioAdapter.setSelectedStation(radioStation);
@@ -338,14 +344,17 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 
 	private void statsClicked() {
 		// Clear crap
-		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
-		ViewGroup topBar = (ViewGroup) findViewById(R.id.top_bar);
-		ViewGroup bottomBar = (ViewGroup) findViewById(R.id.bottom_bar);
-		LayoutInflater inf = this.getLayoutInflater();
+		LinearLayout topBar = findViewById(R.id.bottom_bar);
+		ViewGroup midPanel = findViewById(R.id.mid_panel);
+		LinearLayout bottomBar = findViewById(R.id.bottom_bar);
 
-		midPanel.removeAllViews();
+
+		// Clear only dynamic mid_panel content
 		topBar.removeAllViews();
+		midPanel.removeAllViews();
 		bottomBar.removeAllViews();
+
+		LayoutInflater inf = LayoutInflater.from(this);
 
 		// Main screen turn on
 		inf.inflate(R.layout.status_screen, midPanel);
@@ -400,14 +409,16 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 
 	private void itemsClicked() {
 		// Clear crap
-		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
-		ViewGroup topBar = (ViewGroup) findViewById(R.id.top_bar);
-		ViewGroup bottomBar = (ViewGroup) findViewById(R.id.bottom_bar);
-		LayoutInflater inf = this.getLayoutInflater();
+		LinearLayout topBar = findViewById(R.id.bottom_bar);
+		ViewGroup midPanel = findViewById(R.id.mid_panel);
+		LinearLayout bottomBar = findViewById(R.id.bottom_bar);
 
-		midPanel.removeAllViews();
+
+		// Clear only dynamic mid_panel content
 		topBar.removeAllViews();
+		midPanel.removeAllViews();
 		bottomBar.removeAllViews();
+		LayoutInflater inf = LayoutInflater.from(this);
 
 		// Main screen turn on
 		inf.inflate(R.layout.weapons_screen, midPanel);
@@ -493,13 +504,34 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		openWorldMapByDefault = true;
 
 		// Get containers
+		LinearLayout topBar = findViewById(R.id.bottom_bar);
 		ViewGroup midPanel = findViewById(R.id.mid_panel);
-		ViewGroup bottomBar = findViewById(R.id.bottom_bar);
+		LinearLayout bottomBar = findViewById(R.id.bottom_bar);
+
 
 		// Clear only dynamic mid_panel content
+		topBar.removeAllViews();
 		midPanel.removeAllViews();
+		bottomBar.removeAllViews();
 
-		LayoutInflater inf = getLayoutInflater();
+		LayoutInflater inf = LayoutInflater.from(this);
+		inf.inflate(R.layout.data_bar_bottom, bottomBar, true);
+		View mapView = inf.inflate(R.layout.map_screen, midPanel, false);
+		View radioView = inf.inflate(R.layout.radio, midPanel, false);
+
+		midPanel.addView(mapView);
+		midPanel.addView(radioView);
+
+// Store references
+		mapView.setTag("MAP");
+		radioView.setTag("RADIO");
+
+// Default state
+		radioView.setVisibility(View.GONE);
+		mapView.setVisibility(View.VISIBLE);
+
+
+
 		// Inflate map_screen into midPanel
 		View mapScreenView = inf.inflate(R.layout.map_screen, midPanel, true);
 		FrameLayout mapContainer = mapScreenView.findViewById(R.id.map_container);
@@ -1504,7 +1536,11 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 	private void showWorldMap() {
 		GoogleMap map = VarVault.mMap;
 		LatLng player = VarVault.playerLocation;
-
+		showMap();
+		Log.d("showWorldMap", "source == VarVault.localMapLL");
+		if (VarVault.mMap == null || VarVault.playerLocation == null) return;
+		Log.d("showWorldMap", "VarVault.mMap != null, VarVault.playerLocation != null, continuing");
+		Log.d("showWorldMap", "animate camera");
 		if (map == null) return;
 		if (player == null) {
 			Log.w("Map", "Player location not ready yet");
@@ -1526,10 +1562,12 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 	}
 
 	private void showLocalMap() {
+		showMap();
 		Log.d("showLocalMap", "source == VarVault.localMapLL");
 		if (VarVault.mMap == null || VarVault.playerLocation == null) return;
 		Log.d("showLocalMap", "VarVault.mMap != null, VarVault.playerLocation != null, continuing");
 		Log.d("showLocalMap", "animate camera");
+
 		VarVault.mMap.animateCamera(
 				CameraUpdateFactory.newLatLngZoom(
 						VarVault.playerLocation,
@@ -1905,7 +1943,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 
 		midPanel.addView(radioScreenView); // <<< MUST do this
 		// Assign to existing fields — NO "RecyclerView recyclerView" here!
-		recyclerView = radioScreenView.findViewById(R.id.recycler_view);
+		recyclerView = radioScreenView.findViewById(R.id.radio_list);
 		nowPlayingText = radioScreenView.findViewById(R.id.now_playing);
 		TextView hostLink = radioScreenView.findViewById(R.id.radio_host_link);
 
@@ -1930,6 +1968,23 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		radioOn = !radioOn; // toggle state
 		updateRadioPowerUi(radioOn); // update UI
 	}
+	private void showRadio() {
+		View map = midPanel.findViewWithTag("MAP");
+		View radio = midPanel.findViewWithTag("RADIO");
+		if (map != null) map.setVisibility(View.GONE);
+		if (radio != null) radio.setVisibility(View.VISIBLE);
 
+	}
+
+	private void showMap() {
+		View map = midPanel.findViewWithTag("MAP");
+		View radio = midPanel.findViewWithTag("RADIO");
+		if (mapView != null) {
+			mapView.setVisibility(View.VISIBLE);
+		}
+		if (radioView != null) {
+			radioView.setVisibility(View.GONE);
+		}
+	}
 
 }

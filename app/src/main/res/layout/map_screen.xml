@@ -1,12 +1,10 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             android:id="@+id/map_container"
              android:layout_width="match_parent"
              android:layout_height="match_parent">
 
     <!-- Map container fills the screen -->
-    <FrameLayout
-            android:id="@+id/map_container"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+
 
 
     <!-- Radio UI overlay in the middle -->

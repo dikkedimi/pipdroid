@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
+<LinearLayout
+
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/radio_root"
+        android:padding="0dp"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
@@ -12,9 +14,9 @@
     <RelativeLayout
             android:id="@+id/radio_header"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
 
-            android:padding="8dp">
+            android:padding="0dp">
 
         <!-- Now Playing -->
         <TextView
@@ -38,10 +40,12 @@
                 android:layout_height="48dp"
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
-                android:src="@drawable/ic_radio_power"
+
+                android:src="@android:drawable/ic_media_play"
                 android:contentDescription="Radio Power"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 app:tint="@color/white"/>
+<!--        android:src="@drawable/ic_radio_power" to replace with custom drawable-->
     </RelativeLayout>
 
     <!-- Divider -->
@@ -57,7 +61,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_below="@id/radio_header"
-            android:padding="4dp"
+            android:padding="0dp"
             android:clipToPadding="false"
             android:scrollbars="vertical"/>
     <TextView
@@ -69,12 +73,12 @@
             android:autoLink="web"
             android:clickable="true"
             android:focusable="true"
-            android:padding="8dp"
+            android:padding="0dp"
     />
 
-    <RecyclerView
-            android:id="@+id/recycler_view"
+    <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/radio_list"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"/>
-</RelativeLayout>
+            android:layout_height="wrap_content"/>
+
+</LinearLayout>
