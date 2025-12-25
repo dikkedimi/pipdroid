@@ -1948,7 +1948,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		TextView hostLink = radioScreenView.findViewById(R.id.radio_host_link);
 
 		// Setup host link
-		hostLink.setText("Original host: https://buymeacoffee.com/beenreported");
+		hostLink.setText("streams by https://fallout.radio, support them here! https://buymeacoffee.com/beenreported");
 		hostLink.setOnClickListener(v -> {
 			Intent browserIntent = new Intent(Intent.ACTION_VIEW,
 					Uri.parse("https://buymeacoffee.com/beenreported"));
