@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/radio_root"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_repeat">
+
+    <!-- Header: Power button + Now Playing -->
+    <RelativeLayout
+            android:id="@+id/radio_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="8dp">
+
+        <!-- Now Playing -->
+        <TextView
+                android:id="@+id/now_playing"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Now Playing: "
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:ellipsize="marquee"
+                android:singleLine="true"
+                android:marqueeRepeatLimit="marquee_forever"
+                android:scrollHorizontally="true"/>
+
+        <!-- Radio Power Button -->
+        <ImageButton
+                android:id="@+id/radio_power_button"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/ic_radio_power"
+                android:contentDescription="Radio Power"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:tint="@color/white"/>
+    </RelativeLayout>
+
+    <!-- Divider -->
+    <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:layout_below="@id/radio_header"
+            android:background="@color/pip_boy_green"/>
+
+    <!-- Station List -->
+    <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/radio_station_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/radio_header"
+            android:padding="4dp"
+            android:clipToPadding="false"
+            android:scrollbars="vertical"/>
+    <RecyclerView
+            android:id="@+id/recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"/>
+</RelativeLayout>

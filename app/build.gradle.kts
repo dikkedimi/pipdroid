@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId = "com.skettidev.pipdroid"
-        minSdk = 21
+        minSdk = 24
         targetSdk = 36
         maxSdk = 36
         versionCode = 1
@@ -42,8 +42,14 @@ dependencies {
     implementation("androidx.activity:activity:1.7.2")
     implementation("com.daimajia.androidanimations:library:2.4@aar")
     implementation("androidx.constraintlayout:constraintlayout:2.2.1")
+    implementation("androidx.media3:media3-exoplayer:1.3.1")
+    implementation("androidx.media3:media3-exoplayer-dash:1.3.1")
+    implementation("androidx.media3:media3-ui:1.3.1")
+    implementation("androidx.recyclerview:recyclerview:1.3.1")
     implementation(libs.appcompat)
     implementation(libs.material)
+    implementation(libs.media3.common)
+    implementation(libs.recyclerview)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

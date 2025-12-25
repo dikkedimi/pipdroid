@@ -1,5 +1,17 @@
 package com.skettidev.pipdroid;
+import android.os.Handler;
+import android.os.Looper;
 
+import androidx.media3.common.MediaItem;
+import androidx.media3.exoplayer.ExoPlayer;
+
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import com.skettidev.pipdroid.radio.RadioFragment;
+import com.skettidev.pipdroid.radio.RadioStation;
+
+import com.skettidev.pipdroid.radio.RadioStationAdapter;
+import com.skettidev.pipdroid.radio.RadioStationList;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.*;
@@ -35,12 +47,23 @@ import com.google.android.gms.maps.model.*;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.CameraUpdateFactory;
+import org.json.JSONObject;
 
 
+
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.List;
+import java.util.concurrent.Executors;
+
+import static androidx.media3.common.MediaItem.fromUri;
 
 
-public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, SurfaceHolder.Callback, View.OnClickListener, View.OnLongClickListener {
+public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, SurfaceHolder.Callback, View.OnClickListener, View.OnLongClickListener, RadioFragment.RadioCallback {
 
 
 	//private vars
@@ -62,6 +85,17 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 	private float zoomLevel = VarVault.WORLD_MAP_ZOOM;
 	private boolean openWorldMapByDefault = false;
 	// default to WORLD MAP
+
+	private RadioStation currentStation;
+	private boolean radioOn;
+	private Handler nowPlayingHandler = new Handler(Looper.getMainLooper());
+	private Runnable nowPlayingRunnable;
+	private ImageButton radioPowerButton;
+	private TextView nowPlayingText;
+	private ExoPlayer exoPlayer;
+	private RadioStationAdapter radioAdapter;
+	private RecyclerView recyclerView;
+
 
 
 	private enum MapViewType {WORLD, LOCAL}
@@ -113,6 +147,22 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 
 		// ===== Initialize sound =====
 		HandleSound.initSound(this.getApplicationContext());
+		exoPlayer = new ExoPlayer.Builder(this).build();
+
+		// 3Prepare and play a stream
+		// Initialize first station as default
+		currentStation = RadioStationList.getStations().get(0);
+
+
+
+		RadioStation station;
+		MediaItem mediaItem = fromUri(currentStation.getStreamUrl());
+		exoPlayer.setMediaItem(MediaItem.fromUri(String.valueOf(currentStation)));
+
+
+		exoPlayer.prepare();
+//		exoPlayer.play();
+
 
 		// ===== Initialize stats / fonts =====
 		VarVault.font = Typeface.createFromAsset(getAssets(), "Monofonto.ttf");
@@ -153,6 +203,23 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		// If you want the map ready at startup, you can call:
 		// dataClicked();
 	}
+
+	private void radioClicked(RadioStation radioStation) {
+		currentStation = radioStation;
+		playStream(radioStation);
+		startNowPlayingPolling(radioStation.getNowPlayingUrl());
+
+		// Update selection safely — adapter is already initialized
+		if (radioAdapter != null) {
+			radioAdapter.setSelectedStation(radioStation);
+		}
+
+		// Update UI
+		if (nowPlayingText != null) {
+			nowPlayingText.setText("Now Playing: " + radioStation.getTitle());
+		}
+	}
+
 
 	@Override
 	public void onClick(View source) {
@@ -473,19 +540,21 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		VarVault.quests = bottomBar.findViewById(R.id.btn_quests);
 		VarVault.questsLL = bottomBar.findViewById(R.id.btn_quests_box);
 		VarVault.quests.setTypeface(VarVault.font);
-		VarVault.questsLL.setOnClickListener(v -> this);
+		VarVault.questsLL.setOnClickListener(this);
 
 		VarVault.notes = bottomBar.findViewById(R.id.btn_notes);
 		VarVault.notesLL = bottomBar.findViewById(R.id.btn_notes_box);
 		VarVault.notes.setTypeface(VarVault.font);
-		VarVault.notesLL.setOnClickListener(v -> this);
+		VarVault.notesLL.setOnClickListener(this);
 
 		VarVault.radio = bottomBar.findViewById(R.id.btn_radio);
 		VarVault.radioLL = bottomBar.findViewById(R.id.btn_radio_box);
 		VarVault.radio.setTypeface(VarVault.font);
-		VarVault.radioLL.setOnClickListener(v -> this);
+		VarVault.radioLL.setOnClickListener(v -> radioClicked(currentStation));
+
 
 	}
+
 
 
 	private void statusClicked() {
@@ -1595,7 +1664,6 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 			});
 		}
 
-
 	private void updateCompassIcon(float azimuthDeg) {
 		if (compassToggle == null) return;
 		Log.d("updateCompassIcon", "compassToggle == null, can't continue");
@@ -1734,5 +1802,139 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 
 		return BitmapDescriptorFactory.fromBitmap(bitmap);
 	}
+
+
+	private void stopNowPlayingPolling() {
+		if (nowPlayingRunnable != null) {
+			nowPlayingHandler.removeCallbacks(nowPlayingRunnable);
+			nowPlayingRunnable = null;
+		}
+	}
+	private void updateRadioPowerUi(boolean on) {
+		radioPowerButton.setAlpha(on ? 1f : 0.4f);
+		nowPlayingText.setText(on ? nowPlayingText.getText() : "Radio Off");
+	}
+	private void startNowPlayingPolling(String apiUrl) {
+
+		if (apiUrl == null) return;
+
+		if (nowPlayingRunnable != null) {
+			nowPlayingHandler.removeCallbacks(nowPlayingRunnable);
+		}
+
+		nowPlayingRunnable = new Runnable() {
+			@Override
+			public void run() {
+				fetchNowPlaying(apiUrl);
+				nowPlayingHandler.postDelayed(this, 10_000);
+			}
+		};
+
+		nowPlayingHandler.post(nowPlayingRunnable);
+	}
+
+
+	private void updateSelectedStation(RadioStation selectedStation) {
+		if (radioAdapter != null) {
+			radioAdapter.setSelectedStation(selectedStation);
+		}
+	}
+
+
+
+
+	private void playStream(RadioStation station) {
+		if (station == null) return;
+
+		if (exoPlayer == null) {
+			exoPlayer = new ExoPlayer.Builder(this).build();
+		}
+
+		exoPlayer.stop();
+		exoPlayer.clearMediaItems();
+
+		MediaItem mediaItem = MediaItem.fromUri(station.getStreamUrl());
+		exoPlayer.setMediaItem(mediaItem);
+		exoPlayer.prepare();
+		exoPlayer.play();
+	}
+
+	@Override
+	public void onStationClicked(RadioStation station) {
+		playStream(station);
+		startNowPlayingPolling(station.getNowPlayingUrl());
+
+	}
+
+	@Override
+	public void onPowerToggled() {
+		radioPowerToggle();
+	}
+	private void fetchNowPlaying(String apiUrl) {
+		if (apiUrl == null) return;
+
+		Executors.newSingleThreadExecutor().execute(() -> {
+			try {
+				URL url = new URL(apiUrl);
+				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+				connection.setRequestMethod("GET");
+				connection.connect();
+
+				InputStream inputStream = connection.getInputStream();
+				BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+				StringBuilder json = new StringBuilder();
+				String line;
+
+				while ((line = reader.readLine()) != null) {
+					json.append(line);
+				}
+
+				reader.close();
+				connection.disconnect();
+
+				JSONObject root = new JSONObject(json.toString());
+				JSONObject nowPlaying = root.getJSONObject("now_playing");
+				JSONObject song = nowPlaying.getJSONObject("song");
+				String title = song.getString("title");
+
+				runOnUiThread(() -> {
+					if (nowPlayingText != null) {
+						nowPlayingText.setText("Now Playing: " + title);
+					}
+				});
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		});
+
+	}
+	private void setupRadioView() {
+		LinearLayout midPanel = findViewById(R.id.mid_panel);
+		midPanel.removeAllViews();
+
+		LayoutInflater inf = LayoutInflater.from(this);
+		View radioScreenView = inf.inflate(R.layout.radio, midPanel, false);
+		midPanel.addView(radioScreenView);
+
+		// Grab views
+		recyclerView = radioScreenView.findViewById(R.id.recycler_view);
+		nowPlayingText = radioScreenView.findViewById(R.id.now_playing);
+
+		// Create adapter once
+		radioAdapter = new RadioStationAdapter(
+				RadioStationList.getStations(),
+				this::radioClicked
+		);
+		recyclerView.setLayoutManager(new LinearLayoutManager(this));
+		recyclerView.setAdapter(radioAdapter);
+	}
+
+
+	private void radioPowerToggle() {
+		radioOn = !radioOn; // toggle state
+		updateRadioPowerUi(radioOn); // update UI
+	}
+
 
 }
