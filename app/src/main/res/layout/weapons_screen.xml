@@ -17,7 +17,7 @@
             android:scrollbarStyle="insideOverlay" >
 
             <LinearLayout
-                android:id="@+id/weaponsList"
+                android:id="@+id/weapons_list"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"/>

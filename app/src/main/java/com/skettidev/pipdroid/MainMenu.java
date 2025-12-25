@@ -64,6 +64,7 @@ import java.util.concurrent.Executors;
 
 import static androidx.media3.common.MediaItem.fromUri;
 import static com.skettidev.pipdroid.VarVault.mMap;
+import static com.skettidev.pipdroid.VarVault.weapons;
 
 
 public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, SurfaceHolder.Callback, View.OnClickListener, View.OnLongClickListener, RadioFragment.RadioCallback {
@@ -408,8 +409,11 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 	}
 
 	private void itemsClicked() {
+		//
+
+
 		// Clear crap
-		LinearLayout topBar = findViewById(R.id.bottom_bar);
+		LinearLayout topBar = findViewById(R.id.top_bar);
 		ViewGroup midPanel = findViewById(R.id.mid_panel);
 		LinearLayout bottomBar = findViewById(R.id.bottom_bar);
 
@@ -418,16 +422,24 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		topBar.removeAllViews();
 		midPanel.removeAllViews();
 		bottomBar.removeAllViews();
+
 		LayoutInflater inf = LayoutInflater.from(this);
 
-		// Main screen turn on
-		inf.inflate(R.layout.weapons_screen, midPanel);
+		// Main screen turn on (inflate views)
 		inf.inflate(R.layout.items_bar_top, topBar);
+		inf.inflate(R.layout.item, midPanel);
 		inf.inflate(R.layout.items_bar_bottom, bottomBar);
 
+		// find all main layout views
+		VarVault.items = findViewById(R.id.left_items);
+		TextView y = findViewById(R.id.left_button_items);
+		VarVault.data = findViewById(R.id.left_data);
+		TextView z = findViewById(R.id.left_button_data);
 		VarVault.title = (TextView) findViewById(R.id.title_items);
 		VarVault.title.setTypeface(VarVault.font);
+		VarVault.title.setTypeface(VarVault.font);
 
+		// all specific view views
 		VarVault.wg = (TextView) findViewById(R.id.wg_items);
 		VarVault.maxWG.setValue(150 + (10 * VarVault.strength.getValue()));
 		updateWG();
@@ -469,21 +481,29 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		VarVault.ammo.setTypeface(VarVault.font);
 		VarVault.ammoLL.setOnClickListener(this);
 
-		populateOwnedWeapons();
+
 
 	}
 
 	private void weaponsClicked() {
 
 		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
-		LayoutInflater inf = this.getLayoutInflater();
 
+		// clear views
 		midPanel.removeAllViews();
+
+		LayoutInflater inf = this.getLayoutInflater();
 		inf.inflate(R.layout.weapons_screen, midPanel);
 
-		populateOwnedWeapons();
 
+		View itemsView = inf.inflate(R.layout.weapons_screen, midPanel, true);
+
+		LinearLayout weapons_screen =
+				itemsView.findViewById(R.id.weapons_list);
+
+		// update inventory
 		updateCAPS();
+		populateOwnedWeapons(weapons_screen);
 	}
 
 	private void apparelClicked() {
@@ -504,7 +524,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		openWorldMapByDefault = true;
 
 		// Get containers
-		LinearLayout topBar = findViewById(R.id.bottom_bar);
+		LinearLayout topBar = findViewById(R.id.top_bar);
 		ViewGroup midPanel = findViewById(R.id.mid_panel);
 		LinearLayout bottomBar = findViewById(R.id.bottom_bar);
 
@@ -515,6 +535,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		bottomBar.removeAllViews();
 
 		LayoutInflater inf = LayoutInflater.from(this);
+
 		inf.inflate(R.layout.data_bar_bottom, bottomBar, true);
 		View mapView = inf.inflate(R.layout.map_screen, midPanel, false);
 		View radioView = inf.inflate(R.layout.radio, midPanel, false);
@@ -1094,48 +1115,50 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		VarVault.mHolder = null;
 	}
 
-	private void populateOwnedWeapons() {
-
+	private void populateOwnedWeapons(LinearLayout weapons_screen) {
+		if (weapons_screen == null) {
+			Log.e("ITEMS", "weapons_screen is null – ITEMS layout not inflated");
+			return;
+		}
 		// Open Database
-		dbHelper database = new dbHelper(MainMenu.this);
+	dbHelper database = new dbHelper(MainMenu.this);
 
-		Log.d("DB", "Getting a writable database...");
-		SQLiteDatabase db = database.getWritableDatabase();
-		Log.d("DB", "...writable database gotten!");
+	Log.d("DB", "Getting a writable database...");
+	SQLiteDatabase db = database.getWritableDatabase();
+	Log.d("DB", "...writable database gotten!");
 
-		// Get EVERYTHING from OwnedWeapons
-		Cursor allWeapons = db.query("OwnedWeapons", new String[]{dbHelper.colName, dbHelper.colIsWearing}, null, null, null, null, "_id");
-		allWeapons.moveToFirst();
-		LinearLayout weaponsList = (LinearLayout) findViewById(R.id.weaponsList);
+	// Get EVERYTHING from OwnedWeapons
+	Cursor allWeapons = db.query("OwnedWeapons", new String[]{dbHelper.colName, dbHelper.colIsWearing}, null, null, null, null, "_id");
+	allWeapons.moveToFirst();
 
-		for (int i = 0; i < 20 && !allWeapons.isAfterLast(); i++) {
+	for (int i = 0; i < 20 && !allWeapons.isAfterLast(); i++) {
 
-			String tempName = "";
-			int isWearing = 0;
+		String tempName = "";
+		int isWearing = 0;
 
-			LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-					LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
-			lp.setMargins(15, 0, 0, 15);
-			tempName = allWeapons.getString(0);
-			isWearing = allWeapons.getInt(1);
+		LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+				LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
+		lp.setMargins(15, 0, 0, 15);
+		tempName = allWeapons.getString(0);
+		isWearing = allWeapons.getInt(1);
 
-			VarVault.Weapons.add(i, new TextView(this));
+		VarVault.Weapons.add(i, new TextView(this));
 
-			VarVault.Weapons.get(i).setLayoutParams(lp);
-			VarVault.Weapons.get(i).setTypeface(VarVault.font);
-			VarVault.Weapons.get(i).setTextSize((float) 22.0);
-			VarVault.Weapons.get(i).setTextColor(Color.parseColor("#AAFFAA"));
+		VarVault.Weapons.get(i).setLayoutParams(lp);
+		VarVault.Weapons.get(i).setTypeface(VarVault.font);
+		VarVault.Weapons.get(i).setTextSize((float) 22.0);
+		VarVault.Weapons.get(i).setTextColor(Color.parseColor("#AAFFAA"));
 
-			// Are they wearing it?
-			if (isWearing == 0)
-				VarVault.Weapons.get(i).setText("  " + tempName);
-			else
-				VarVault.Weapons.get(i).setText("\u25a0 " + tempName);
+		// Are they wearing it?
+		if (isWearing == 0)
+			VarVault.Weapons.get(i).setText("  " + tempName);
+		else
+			VarVault.Weapons.get(i).setText("\u25a0 " + tempName);
 
-			VarVault.Weapons.get(i).setOnLongClickListener(this);
-			weaponsList.addView(VarVault.Weapons.get(i));
+		VarVault.Weapons.get(i).setOnLongClickListener(this);
+		weapons_screen.addView(VarVault.Weapons.get(i));
 
-			allWeapons.moveToNext();
+		allWeapons.moveToNext();
 		}
 	}
 
@@ -1872,7 +1895,9 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		if (exoPlayer == null) {
 			exoPlayer = new ExoPlayer.Builder(this).build();
 		}
-
+		if (nowPlayingText != null) {
+			nowPlayingText.setText("Now Playing: " + station.getNowPlayingUrl());
+		}
 		exoPlayer.stop();
 		exoPlayer.clearMediaItems();
 
@@ -1944,7 +1969,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		midPanel.addView(radioScreenView); // <<< MUST do this
 		// Assign to existing fields — NO "RecyclerView recyclerView" here!
 		recyclerView = radioScreenView.findViewById(R.id.radio_list);
-		nowPlayingText = radioScreenView.findViewById(R.id.now_playing);
+		nowPlayingText = radioScreenView.findViewById(R.id.now_Playing_Text);
 		TextView hostLink = radioScreenView.findViewById(R.id.radio_host_link);
 
 		// Setup host link
