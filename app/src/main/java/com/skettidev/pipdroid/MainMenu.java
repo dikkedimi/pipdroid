@@ -1,6 +1,7 @@
 package com.skettidev.pipdroid;
 
 import android.net.Uri;
+import android.os.BatteryManager;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -68,8 +69,19 @@ import static com.skettidev.pipdroid.VarVault.weapons;
 
 
 public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, SurfaceHolder.Callback, View.OnClickListener, View.OnLongClickListener, RadioFragment.RadioCallback {
+	enum Screen {
+		STATS,
+		ITEMS,
+		DATA
+	}
+	private enum MapViewType {
+		WORLD,
+		LOCAL
+	}
 
-
+	// constants
+	private static final float WORLD_MAP_ZOOM = VarVault.WORLD_MAP_ZOOM; // city-wide
+	private static final float LOCAL_MAP_ZOOM = VarVault.LOCAL_MAP_ZOOM; // nearby streets
 	//private vars
 	private View mapView;
 	private View radioView;
@@ -81,6 +93,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 	private boolean isLocationEnabled = false;
 
 	private MapViewType currentMapView;
+
 	private ImageButton compassToggle;
 	private float lastCompassRotation = 0f;
 	private SupportMapFragment mapFragment;
@@ -102,8 +115,9 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 	private ExoPlayer exoPlayer;
 	private RadioStationAdapter radioAdapter;
 	private RecyclerView recyclerView;
+	private SupportMapFragment cachedMapFragment = null;
 
-	private enum MapViewType {WORLD, LOCAL}
+
 
 
 	//???
@@ -111,6 +125,9 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 	private float[] orientation = new float[3];
 	private float azimuthDeg;
 	public static GoogleMap mMap;
+	private View cachedMapView = null;
+	private View cachedRadioView = null;
+
 	private final ActivityResultLauncher<String> requestPermissionLauncher =
 			registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
 				if (isGranted) {
@@ -142,7 +159,15 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 				WindowInsetsCompat.Type.statusBars()
 //						| WindowInsetsCompat.Type.navigationBars()
 		);
-
+		VarVault.mBatInfoReceiver = new BroadcastReceiver() {
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				if (VarVault.bat != null) {
+					int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
+					VarVault.bat.setText("BAT: " + level + "%");
+				}
+			}
+		};
 		// Allow swipe to show bars temporarily
 		controller.setSystemBarsBehavior(
 				WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
@@ -229,84 +254,41 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 	}
 
 
+
+	// -----------------------------
+	// Simplified onClick
+	// -----------------------------
 	@Override
 	public void onClick(View source) {
-
+		// Always update caps
 		VarVault.curCaps.setValue(VarVault.curCaps.getValue() + 5);
 
-		// Play a tune, dependent on source.
-		if (VarVault.MAIN_BUTTONS.contains(source))
-			HandleSound.playSound(HandleSound.aud_newTab);
-		else if (source == VarVault.stimpak)
-			HandleSound.playSound(HandleSound.aud_stimpak);
-		else
-			HandleSound.playSound(HandleSound.aud_selection);
+		// Play sound
+		if (VarVault.MAIN_BUTTONS.contains(source)) HandleSound.playSound(HandleSound.aud_newTab);
+		else if (source == VarVault.stimpak) HandleSound.playSound(HandleSound.aud_stimpak);
+		else HandleSound.playSound(HandleSound.aud_selection);
 
-		// Set the panels for future usage.
-		ViewGroup midPanel = findViewById(R.id.mid_panel);
-		ViewGroup topBar = findViewById(R.id.top_bar);
-		ViewGroup bottomBar = findViewById(R.id.bottom_bar);
+		// === Stats / Skills / Status ===
+		if (source == VarVault.stats) { statsClicked(); return; }
+		if (source == VarVault.statusLL) { statusClicked(); return; }
+		if (source == VarVault.specialLL || source == VarVault.special) { specialClicked(); return; }
+		if (source == VarVault.skillsLL || source == VarVault.skills) { skillsClicked(); return; }
+		if (VarVault.SUBMENU_SPECIAL.contains(source)) { specialStatClicked(source); return; }
+		if (VarVault.SUBMENU_SKILLS.contains(source)) { skillStatClicked(source); return; }
 
-		// Sort the source
-		if (source == VarVault.stats)
-			statsClicked();
-		else if (source == VarVault.statusLL)
-			statusClicked();
-		else if (source == VarVault.specialLL || source == VarVault.special)
-			specialClicked();
-		else if (source == VarVault.skillsLL || source == VarVault.skills)
-			skillsClicked();
-		else if (source == VarVault.perksLL) {
-		} else if (source == VarVault.generalLL) {
-		} else if (source == VarVault.cnd || source == VarVault.rad || source == VarVault.stimpak) {
-		} else if (VarVault.SUBMENU_SPECIAL.contains(source))
-			specialStatClicked(source);
-		else if (VarVault.SUBMENU_SKILLS.contains(source))
-			skillStatClicked(source);
-		else if (source == VarVault.flashlight)
-			flashlightClicked();
-		else if (source == VarVault.items)
-			itemsClicked();
-		else if (source == VarVault.weaponsLL)
-			weaponsClicked();
-		else if (VarVault.Weapons.contains(source)) {
-		} else if (source == VarVault.apparelLL)
-			apparelClicked();
-		else if (VarVault.Apparel.contains(source)) {
-		} else if (source == VarVault.aidLL) {
-			updateCAPS();
-		} else if (source == VarVault.miscLL) {
-			updateCAPS();
-		} else if (source == VarVault.ammoLL) {
-			updateCAPS();
-		} else if (source == VarVault.data)
-			dataClicked();
+		// === Data buttons ===
+		if (source == VarVault.data) { dataClicked(); return; }
+		if (source == VarVault.localMapLL && mapFragment != null) { showLocalMap(); return; }
+		if (source == VarVault.worldMapLL && mapFragment != null) { showWorldMap(); return; }
+		if (source == VarVault.questsLL) { Log.d("Menu", "Quests clicked"); return; }
+		if (source == VarVault.notesLL) { Log.d("Menu", "Notes clicked"); return; }
+		if (source == VarVault.radioLL) { Log.d("Menu", "Radio clicked"); return; }
 
-			// ===== DATA BUTTONS HANDLING =====
-		else if (source == VarVault.localMapLL)
-			if (mapFragment != null) {
-				showLocalMap();
-				Log.d("Menu", "source == VarVault.localMapLL");
-			} else if (source == VarVault.worldMapLL)
-				if (mapFragment != null) {
-					showWorldMap();
-					Log.d("Menu", "source == VarVault.worldMapLL");
-				} else if (source == VarVault.questsLL)
-					Log.d("Menu", "Quests clicked");
-				else if (source == VarVault.notesLL)
-					Log.d("Menu", "Notes clicked");
-				else if (source == VarVault.radioLL)
-					Log.d("Menu", "Radio clicked");
-
-				else {
-					topBar.removeAllViews();
-					midPanel.removeAllViews();
-					showWorldMap();
-					bottomBar.removeAllViews();
-					Log.d("Menu", "Removed all views");
-				}
+		// === Fallback ===
+		resetScreen();
+		showWorldMap();
+		Log.d("Menu", "Fallback: removed all views and showing world map");
 	}
-
 
 	private void flashlightClicked() {
 		if (VarVault.mCamera == null) {
@@ -343,75 +325,9 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		}
 	}
 
-	private void statsClicked() {
-		// Clear crap
-		LinearLayout topBar = findViewById(R.id.bottom_bar);
-		ViewGroup midPanel = findViewById(R.id.mid_panel);
-		LinearLayout bottomBar = findViewById(R.id.bottom_bar);
-
-
-		// Clear only dynamic mid_panel content
-		topBar.removeAllViews();
-		midPanel.removeAllViews();
-		bottomBar.removeAllViews();
-
-		LayoutInflater inf = LayoutInflater.from(this);
-
-		// Main screen turn on
-		inf.inflate(R.layout.status_screen, midPanel);
-		inf.inflate(R.layout.stats_bar_top, topBar);
-		inf.inflate(R.layout.stats_bar_bottom, bottomBar);
-
-		// Format top bar text
-		VarVault.title = (TextView) findViewById(R.id.title_stats);
-		VarVault.title.setText("STATUS");
-		VarVault.title.setTypeface(VarVault.font);
-
-		VarVault.hp = (TextView) findViewById(R.id.hp_stats);
-		VarVault.hp.setTypeface(VarVault.font);
-
-		VarVault.ap = (TextView) findViewById(R.id.ap_stats);
-		VarVault.ap.setTypeface(VarVault.font);
-
-		VarVault.bat = (TextView) findViewById(R.id.bat_stats);
-		VarVault.bat.setTypeface(VarVault.font);
-		this.registerReceiver(VarVault.mBatInfoReceiver, new IntentFilter(
-				Intent.ACTION_BATTERY_CHANGED));
-
-		// Button-ize the buttons
-		VarVault.status = (TextView) findViewById(R.id.btn_status);
-		VarVault.statusLL = (LinearLayout) findViewById(R.id.btn_status_box);
-		VarVault.status.setTypeface(VarVault.font);
-		VarVault.statusLL.setOnClickListener(this);
-
-		VarVault.special = (TextView) findViewById(R.id.btn_special);
-		VarVault.specialLL = (LinearLayout) findViewById(R.id.btn_special_box);
-		VarVault.special.setTypeface(VarVault.font);
-		VarVault.specialLL.setOnClickListener(this);
-
-		VarVault.skills = (TextView) findViewById(R.id.btn_skills);
-		VarVault.skillsLL = (LinearLayout) findViewById(R.id.btn_skills_box);
-		VarVault.skills.setTypeface(VarVault.font);
-		VarVault.skillsLL.setOnClickListener(this);
-
-		VarVault.perks = (TextView) findViewById(R.id.btn_perks);
-		VarVault.perksLL = (LinearLayout) findViewById(R.id.btn_perks_box);
-		VarVault.perks.setTypeface(VarVault.font);
-		VarVault.perksLL.setOnClickListener(this);
-
-		VarVault.general = (TextView) findViewById(R.id.btn_general);
-		VarVault.generalLL = (LinearLayout) findViewById(R.id.btn_general_box);
-		VarVault.general.setTypeface(VarVault.font);
-		VarVault.generalLL.setOnClickListener(this);
-
-		statusClicked();
-
-	}
 
 	private void itemsClicked() {
-		//
-
-
+		resetScreen();
 		// Clear crap
 		LinearLayout topBar = findViewById(R.id.top_bar);
 		ViewGroup midPanel = findViewById(R.id.mid_panel);
@@ -450,64 +366,54 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		VarVault.caps.setTypeface(VarVault.font);
 		//VarVault.caps.setText(VarVault.curCaps.getValue());
 
-		VarVault.bat = (TextView) findViewById(R.id.bat_items);
-		VarVault.bat.setTypeface(VarVault.font);
-		this.registerReceiver(VarVault.mBatInfoReceiver, new IntentFilter(
-				Intent.ACTION_BATTERY_CHANGED));
+		VarVault.bat = findViewById(R.id.bat_stats);
+		if (VarVault.bat != null) {
+			VarVault.bat.setTypeface(VarVault.font);
+		}
 
-		// Button-ize the buttons
-		VarVault.weapons = (TextView) findViewById(R.id.btn_weapons);
-		VarVault.weaponsLL = (LinearLayout) findViewById(R.id.btn_weapons_box);
-		VarVault.weapons.setTypeface(VarVault.font);
-		VarVault.weaponsLL.setOnClickListener(this);
-
-		VarVault.apparel = (TextView) findViewById(R.id.btn_apparel);
-		VarVault.apparelLL = (LinearLayout) findViewById(R.id.btn_apparel_box);
-		VarVault.apparel.setTypeface(VarVault.font);
-		VarVault.apparelLL.setOnClickListener(this);
-
-		VarVault.aid = (TextView) findViewById(R.id.btn_aid);
-		VarVault.aidLL = (LinearLayout) findViewById(R.id.btn_aid_box);
-		VarVault.aid.setTypeface(VarVault.font);
-		VarVault.aidLL.setOnClickListener(this);
-
-		VarVault.misc = (TextView) findViewById(R.id.btn_misc);
-		VarVault.miscLL = (LinearLayout) findViewById(R.id.btn_misc_box);
-		VarVault.misc.setTypeface(VarVault.font);
-		VarVault.miscLL.setOnClickListener(this);
-
-		VarVault.ammo = (TextView) findViewById(R.id.btn_ammo);
-		VarVault.ammoLL = (LinearLayout) findViewById(R.id.btn_ammo_box);
-		VarVault.ammo.setTypeface(VarVault.font);
-		VarVault.ammoLL.setOnClickListener(this);
-
-
-
+		bindItemsViews();
 	}
+private void bindItemsViews() {
+	// Button-ize the buttons
+	VarVault.weapons = (TextView) findViewById(R.id.btn_weapons);
+	VarVault.weaponsLL = (LinearLayout) findViewById(R.id.btn_weapons_box);
+	VarVault.weapons.setTypeface(VarVault.font);
+	VarVault.weaponsLL.setOnClickListener(this);
 
+	VarVault.apparel = (TextView) findViewById(R.id.btn_apparel);
+	VarVault.apparelLL = (LinearLayout) findViewById(R.id.btn_apparel_box);
+	VarVault.apparel.setTypeface(VarVault.font);
+	VarVault.apparelLL.setOnClickListener(this);
+
+	VarVault.aid = (TextView) findViewById(R.id.btn_aid);
+	VarVault.aidLL = (LinearLayout) findViewById(R.id.btn_aid_box);
+	VarVault.aid.setTypeface(VarVault.font);
+	VarVault.aidLL.setOnClickListener(this);
+
+	VarVault.misc = (TextView) findViewById(R.id.btn_misc);
+	VarVault.miscLL = (LinearLayout) findViewById(R.id.btn_misc_box);
+	VarVault.misc.setTypeface(VarVault.font);
+	VarVault.miscLL.setOnClickListener(this);
+
+	VarVault.ammo = (TextView) findViewById(R.id.btn_ammo);
+	VarVault.ammoLL = (LinearLayout) findViewById(R.id.btn_ammo_box);
+	VarVault.ammo.setTypeface(VarVault.font);
+	VarVault.ammoLL.setOnClickListener(this);
+}
 	private void weaponsClicked() {
+		resetScreen();
 
-		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
+		ViewGroup midPanel = findViewById(R.id.mid_panel);
+		LayoutInflater inf = getLayoutInflater();
 
-		// clear views
-		midPanel.removeAllViews();
-
-		LayoutInflater inf = this.getLayoutInflater();
-		inf.inflate(R.layout.weapons_screen, midPanel);
-
-
-		View itemsView = inf.inflate(R.layout.weapons_screen, midPanel, true);
-
-		LinearLayout weapons_screen =
-				itemsView.findViewById(R.id.weapons_list);
-
-		// update inventory
+		inf.inflate(R.layout.weapons_screen, midPanel, true);
+		LinearLayout weaponsList = findViewById(R.id.mid_panel);
+		populateOwnedWeapons(weaponsList);
 		updateCAPS();
-		populateOwnedWeapons(weapons_screen);
 	}
+
 
 	private void apparelClicked() {
-
 		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
 		LayoutInflater inf = this.getLayoutInflater();
 
@@ -520,89 +426,191 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 	}
 
 	private void dataClicked() {
-		// Default map setting
+		// Reset dynamic screen content
+		resetScreen();
 		openWorldMapByDefault = true;
 
-		// Get containers
-		LinearLayout topBar = findViewById(R.id.top_bar);
+		LayoutInflater inf = LayoutInflater.from(this);
 		ViewGroup midPanel = findViewById(R.id.mid_panel);
+		LinearLayout topBar = findViewById(R.id.top_bar);
 		LinearLayout bottomBar = findViewById(R.id.bottom_bar);
 
-
-		// Clear only dynamic mid_panel content
-		topBar.removeAllViews();
+		// Clear the dynamic midPanel, topBar, bottomBar
 		midPanel.removeAllViews();
+		topBar.removeAllViews();
 		bottomBar.removeAllViews();
 
-		LayoutInflater inf = LayoutInflater.from(this);
+		// Inflate bottom bar once
+		View bottomContent = inf.inflate(R.layout.data_bar_bottom, bottomBar, false);
+		bottomBar.addView(bottomContent);
 
-		inf.inflate(R.layout.data_bar_bottom, bottomBar, true);
-		View mapView = inf.inflate(R.layout.map_screen, midPanel, false);
-		View radioView = inf.inflate(R.layout.radio, midPanel, false);
+		// Inflate map and radio views once, reuse if already cached
+		if (cachedMapView == null) {
+			cachedMapView = inf.inflate(R.layout.map_screen, midPanel, false);
+			cachedMapView.setTag("MAP");
+		}
 
-		midPanel.addView(mapView);
-		midPanel.addView(radioView);
+		if (cachedRadioView == null) {
+			cachedRadioView = inf.inflate(R.layout.radio, midPanel, false);
+			cachedRadioView.setTag("RADIO");
+		}
 
-// Store references
-		mapView.setTag("MAP");
-		radioView.setTag("RADIO");
+		midPanel.addView(cachedMapView);
+		midPanel.addView(cachedRadioView);
 
-// Default state
-		radioView.setVisibility(View.GONE);
-		mapView.setVisibility(View.VISIBLE);
+		// Default visibility
+		cachedMapView.setVisibility(View.VISIBLE);
+		cachedRadioView.setVisibility(View.GONE);
 
+		// Map initialization with caching
+		FrameLayout mapContainer = cachedMapView.findViewById(R.id.map_container);
 
+		if (cachedMapFragment == null) {
+			cachedMapFragment = SupportMapFragment.newInstance();
+			getSupportFragmentManager()
+					.beginTransaction()
+					.add(mapContainer.getId(), cachedMapFragment, "MAP_FRAGMENT")
+					.commitNow();
+		}
 
-		// Inflate map_screen into midPanel
-		View mapScreenView = inf.inflate(R.layout.map_screen, midPanel, true);
-		FrameLayout mapContainer = mapScreenView.findViewById(R.id.map_container);
+		cachedMapFragment.getMapAsync(this);
 
-		// Create the map fragment
-		SupportMapFragment mapFragment = SupportMapFragment.newInstance();
-		getSupportFragmentManager()
-				.beginTransaction()
-				.replace(mapContainer.getId(), mapFragment)
-				.commit();
-		getSupportFragmentManager().executePendingTransactions();
-		mapFragment.getMapAsync(this);
+		// Bind bottom bar buttons
+		bindDataViews(bottomContent);
+	}
 
-		// Initialize bottom bar buttons (already included in main.xml)
-		VarVault.localMap = bottomBar.findViewById(R.id.btn_localmap);
-		VarVault.localMapLL = bottomBar.findViewById(R.id.btn_localmap_box);
+	private void bindDataViews(View bottomContent) {
+		VarVault.localMap = bottomContent.findViewById(R.id.btn_localmap);
+		VarVault.localMapLL = bottomContent.findViewById(R.id.btn_localmap_box);
 		if (VarVault.localMap != null) VarVault.localMap.setTypeface(VarVault.font);
 		if (VarVault.localMapLL != null) VarVault.localMapLL.setOnClickListener(v -> showLocalMap());
 
-		VarVault.worldMap = bottomBar.findViewById(R.id.btn_worldmap);
-		VarVault.worldMapLL = bottomBar.findViewById(R.id.btn_worldmap_box);
+		VarVault.worldMap = bottomContent.findViewById(R.id.btn_worldmap);
+		VarVault.worldMapLL = bottomContent.findViewById(R.id.btn_worldmap_box);
 		if (VarVault.worldMap != null) VarVault.worldMap.setTypeface(VarVault.font);
 		if (VarVault.worldMapLL != null) VarVault.worldMapLL.setOnClickListener(v -> showWorldMap());
 
-		VarVault.quests = bottomBar.findViewById(R.id.btn_quests);
-		VarVault.questsLL = bottomBar.findViewById(R.id.btn_quests_box);
+		VarVault.quests = bottomContent.findViewById(R.id.btn_quests);
+		VarVault.questsLL = bottomContent.findViewById(R.id.btn_quests_box);
 		if (VarVault.quests != null) VarVault.quests.setTypeface(VarVault.font);
 		if (VarVault.questsLL != null) VarVault.questsLL.setOnClickListener(this);
 
-		VarVault.notes = bottomBar.findViewById(R.id.btn_notes);
-		VarVault.notesLL = bottomBar.findViewById(R.id.btn_notes_box);
+		VarVault.notes = bottomContent.findViewById(R.id.btn_notes);
+		VarVault.notesLL = bottomContent.findViewById(R.id.btn_notes_box);
 		if (VarVault.notes != null) VarVault.notes.setTypeface(VarVault.font);
 		if (VarVault.notesLL != null) VarVault.notesLL.setOnClickListener(this);
 
-		VarVault.radio = bottomBar.findViewById(R.id.btn_radio);
-		VarVault.radioLL = bottomBar.findViewById(R.id.btn_radio_box);
+		VarVault.radio = bottomContent.findViewById(R.id.btn_radio);
+		VarVault.radioLL = bottomContent.findViewById(R.id.btn_radio_box);
 		if (VarVault.radio != null) VarVault.radio.setTypeface(VarVault.font);
 		if (VarVault.radioLL != null) VarVault.radioLL.setOnClickListener(v -> radioClicked(currentStation));
 	}
 
+	// STATS clicked
+	// -----------------------------
+// Stats screen
+// -----------------------------
+	private void statsClicked() {
+		resetScreen();
+
+		LayoutInflater inf = LayoutInflater.from(this);
+
+		// Inflate layouts
+		View midContent = inf.inflate(R.layout.status_screen, findViewById(R.id.mid_panel), true);
+		View topContent = inf.inflate(R.layout.stats_bar_top, findViewById(R.id.top_bar), true);
+		View bottomContent = inf.inflate(R.layout.stats_bar_bottom, findViewById(R.id.bottom_bar), true);
+
+		// Bind all views safely
+		bindStatsViews(midContent, topContent, bottomContent);
+
+		// Update stats values dynamically
+		updateStatsValues();
+
+		// Optionally, show default status tab
+		statusClicked();
+	}
+
+
+	// -----------------------------
+// Safe binding of stats views
+// -----------------------------
+	private void bindStatsViews(View midContent, View topContent, View bottomContent) {
+		// Mid panel stats
+		VarVault.hp = midContent.findViewById(R.id.hp_stats);
+		VarVault.ap = midContent.findViewById(R.id.ap_stats);
+		VarVault.bat = midContent.findViewById(R.id.bat_stats);
+
+		if (VarVault.hp != null) VarVault.hp.setTypeface(VarVault.font);
+		if (VarVault.ap != null) VarVault.ap.setTypeface(VarVault.font);
+		if (VarVault.bat != null) VarVault.bat.setTypeface(VarVault.font);
+
+		// Top bar title
+		VarVault.title = topContent.findViewById(R.id.title_stats);
+		if (VarVault.title != null) {
+			VarVault.title.setText("STATUS");
+			VarVault.title.setTypeface(VarVault.font);
+		}
+
+		// Bottom bar buttons
+		VarVault.status = bottomContent.findViewById(R.id.btn_status);
+		VarVault.statusLL = bottomContent.findViewById(R.id.btn_status_box);
+		if (VarVault.status != null) VarVault.status.setTypeface(VarVault.font);
+		if (VarVault.statusLL != null) VarVault.statusLL.setOnClickListener(this);
+
+		VarVault.special = bottomContent.findViewById(R.id.btn_special);
+		VarVault.specialLL = bottomContent.findViewById(R.id.btn_special_box);
+		if (VarVault.special != null) VarVault.special.setTypeface(VarVault.font);
+		if (VarVault.specialLL != null) VarVault.specialLL.setOnClickListener(this);
+
+		VarVault.skills = bottomContent.findViewById(R.id.btn_skills);
+		VarVault.skillsLL = bottomContent.findViewById(R.id.btn_skills_box);
+		if (VarVault.skills != null) VarVault.skills.setTypeface(VarVault.font);
+		if (VarVault.skillsLL != null) VarVault.skillsLL.setOnClickListener(this);
+
+		VarVault.perks = bottomContent.findViewById(R.id.btn_perks);
+		VarVault.perksLL = bottomContent.findViewById(R.id.btn_perks_box);
+		if (VarVault.perks != null) VarVault.perks.setTypeface(VarVault.font);
+		if (VarVault.perksLL != null) VarVault.perksLL.setOnClickListener(this);
+
+		VarVault.general = bottomContent.findViewById(R.id.btn_general);
+		VarVault.generalLL = bottomContent.findViewById(R.id.btn_general_box);
+		if (VarVault.general != null) VarVault.general.setTypeface(VarVault.font);
+		if (VarVault.generalLL != null) VarVault.generalLL.setOnClickListener(this);
+
+		// Register battery receiver safely
+		VarVault.bat = findViewById(R.id.bat_stats);
+		if (VarVault.bat != null) {
+			VarVault.bat.setTypeface(VarVault.font);
+		}
+	}
+
+
+
+
+
+
+
+		// STATUS clicked
+	// -----------------------------
+// Status tab click
+// -----------------------------
 	private void statusClicked() {
+		// Make sure required views are available
+		if (VarVault.title == null || VarVault.hp == null || VarVault.ap == null || VarVault.bat == null) {
+			Log.w("MainMenu", "statusClicked called before views are bound");
+			return; // abort safely
+		}
 
-		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
-		midPanel.removeAllViews();
-
-		LayoutInflater inf = this.getLayoutInflater();
-		inf.inflate(R.layout.status_screen, midPanel, true);
-
+		// Update top bar
 		VarVault.title.setText("STATUS");
 
+		// Mid panel: dynamic stats info
+		updateStatsValues();
+	}
+
+
+	// bind STATUS views
+	private void bindStatusViews() {
 		VarVault.cnd = (TextView) findViewById(R.id.btn_cnd);
 		VarVault.cnd.setTypeface(VarVault.font);
 		VarVault.cnd.setOnClickListener(this);
@@ -621,6 +629,7 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 	}
 
 	private void specialClicked() {
+		resetScreen();
 
 		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
 		LayoutInflater inf = this.getLayoutInflater();
@@ -632,6 +641,11 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 
 		VarVault.specialImage = (ImageView) findViewById(R.id.special_image);
 
+		bindSpecialViews();
+		InitializeArrays.submenu_special();
+	}
+
+	private void bindSpecialViews() {
 		VarVault.str = (TextView) findViewById(R.id.text_strength);
 		VarVault.str.setTypeface(VarVault.font);
 		VarVault.str.setOnClickListener(this);
@@ -680,8 +694,6 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		VarVault.lukSTAT = (TextView) findViewById(R.id.luck_stat);
 		VarVault.lukSTAT.setText(String.valueOf(VarVault.luck.getValue()));
 		VarVault.lukSTAT.setTypeface(VarVault.font);
-
-		InitializeArrays.submenu_special();
 	}
 
 	private void skillsClicked() {
@@ -1028,10 +1040,11 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		VarVault.ap = (TextView) findViewById(R.id.ap_stats);
 		VarVault.ap.setTypeface(VarVault.font);
 
-		VarVault.bat = (TextView) findViewById(R.id.bat_stats);
-		VarVault.bat.setTypeface(VarVault.font);
-		this.registerReceiver(VarVault.mBatInfoReceiver, new IntentFilter(
-				Intent.ACTION_BATTERY_CHANGED));
+		VarVault.bat = findViewById(R.id.bat_stats);
+		if (VarVault.bat != null) {
+			VarVault.bat.setTypeface(VarVault.font);
+		}
+
 
 		// Button-ize the buttons
 		VarVault.status = (TextView) findViewById(R.id.btn_status);
@@ -1093,7 +1106,11 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 			VarVault.mCamera = null;
 			VarVault.isCamOn = false;
 		}
-		this.unregisterReceiver(VarVault.mBatInfoReceiver);
+		VarVault.bat = findViewById(R.id.bat_stats);
+		if (VarVault.bat != null) {
+			VarVault.bat.setTypeface(VarVault.font);
+		}
+
 		super.onDestroy();
 	}
 
@@ -1538,8 +1555,6 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 
 
 
-	private static final float WORLD_MAP_ZOOM = 13.5f; // city-wide
-	private static final float LOCAL_MAP_ZOOM = 16.5f; // nearby streets
 
 	@Override
 	public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
@@ -1994,22 +2009,75 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		updateRadioPowerUi(radioOn); // update UI
 	}
 	private void showRadio() {
+		ViewGroup midPanel = findViewById(R.id.mid_panel);
+		if (midPanel == null) return;
+
 		View map = midPanel.findViewWithTag("MAP");
 		View radio = midPanel.findViewWithTag("RADIO");
+
 		if (map != null) map.setVisibility(View.GONE);
 		if (radio != null) radio.setVisibility(View.VISIBLE);
-
 	}
 
 	private void showMap() {
+		ViewGroup midPanel = findViewById(R.id.mid_panel);
+		if (midPanel == null) return;
+
 		View map = midPanel.findViewWithTag("MAP");
 		View radio = midPanel.findViewWithTag("RADIO");
-		if (mapView != null) {
-			mapView.setVisibility(View.VISIBLE);
-		}
-		if (radioView != null) {
-			radioView.setVisibility(View.GONE);
-		}
+
+		if (radio != null) radio.setVisibility(View.GONE);
+		if (map != null) map.setVisibility(View.VISIBLE);
 	}
 
+	private void resetScreen() {
+		ViewGroup midPanel = findViewById(R.id.mid_panel);
+		LinearLayout topBar = findViewById(R.id.top_bar);
+		LinearLayout bottomBar = findViewById(R.id.bottom_bar);
+
+		if (midPanel != null) midPanel.removeAllViews();
+		if (topBar != null) topBar.removeAllViews();
+		if (bottomBar != null) bottomBar.removeAllViews();
+
+		// HARD stop DATA-only views
+		hideDataViews();
+	}
+
+	private void hideDataViews() {
+		ViewGroup root = findViewById(R.id.mid_panel);
+		if (root == null) return;
+
+		View map = root.findViewWithTag("MAP");
+		View radio = root.findViewWithTag("RADIO");
+
+		if (map != null) map.setVisibility(View.GONE);
+		if (radio != null) radio.setVisibility(View.GONE);
+	}
+	public void onReceive(Context context, Intent intent) {
+		if (VarVault.bat != null) {
+			int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
+			int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100);
+			int batteryPct = (int)((level / (float)scale) * 100);
+			VarVault.bat.setText(batteryPct + "%");
+		}
+	}
+	private BroadcastReceiver mBatInfoReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (VarVault.bat != null) {
+				int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
+				int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100);
+				int batteryPct = (int)((level / (float) scale) * 100);
+				VarVault.bat.setText(batteryPct + "%");
+			}
+		}
+	};
+	// -----------------------------
+	// Dynamic stats updater
+	// -----------------------------
+	private void updateStatsValues() {
+		if (VarVault.hp != null) VarVault.hp.setText("HP: " + VarVault.hp.getText());
+		if (VarVault.ap != null) VarVault.ap.setText("AP: " + VarVault.ap.getText());
+		if (VarVault.bat != null) VarVault.bat.setText("BAT: " + VarVault.bat.getText());
+	}
 }
