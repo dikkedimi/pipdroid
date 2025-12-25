@@ -1,12 +1,28 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+             android:layout_width="match_parent"
+             android:layout_height="match_parent">
 
-    <!-- Map container for programmatically added fragment -->
+    <!-- Map container fills the screen -->
     <FrameLayout
-        android:id="@+id/map_container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+            android:id="@+id/map_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+
+    <!-- Radio UI overlay in the middle -->
+    <LinearLayout
+            android:id="@+id/mid_panel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp"
+
+            android:layout_gravity="center"
+            android:elevation="8dp">
+        <!-- Radio layout will be inflated here dynamically -->
+    </LinearLayout>
+
+    <!-- Compass button (optional overlay) -->
     <ImageButton
             android:id="@+id/btnCompassToggle"
             android:layout_width="48dp"
@@ -18,4 +34,5 @@
             android:layout_gravity="top|end"
             android:focusable="true"
             android:clickable="true"/>
+
 </FrameLayout>

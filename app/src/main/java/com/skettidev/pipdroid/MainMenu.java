@@ -1,4 +1,6 @@
 package com.skettidev.pipdroid;
+
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -61,6 +63,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 
 import static androidx.media3.common.MediaItem.fromUri;
+import static com.skettidev.pipdroid.VarVault.mMap;
 
 
 public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, SurfaceHolder.Callback, View.OnClickListener, View.OnLongClickListener, RadioFragment.RadioCallback {
@@ -95,8 +98,6 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 	private ExoPlayer exoPlayer;
 	private RadioStationAdapter radioAdapter;
 	private RecyclerView recyclerView;
-
-
 
 	private enum MapViewType {WORLD, LOCAL}
 
@@ -488,74 +489,56 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 	}
 
 	private void dataClicked() {
-		//view settings
-		openWorldMapByDefault = true; //default to WORLD_MAP_ZOOM, otherwise to LOCAL_MAP_ZOOM
+		// Default map setting
+		openWorldMapByDefault = true;
 
-		//clear crap
-		ViewGroup midPanel = (ViewGroup) findViewById(R.id.mid_panel);
-		ViewGroup topBar = (ViewGroup) findViewById(R.id.top_bar);
-		ViewGroup bottomBar = (ViewGroup) findViewById(R.id.bottom_bar);
-		LayoutInflater inf = this.getLayoutInflater();
+		// Get containers
+		ViewGroup midPanel = findViewById(R.id.mid_panel);
+		ViewGroup bottomBar = findViewById(R.id.bottom_bar);
 
+		// Clear only dynamic mid_panel content
 		midPanel.removeAllViews();
-		topBar.removeAllViews();
-		bottomBar.removeAllViews();
 
-		//main screen on
-		// Inflate top and bottom bars
-		inf.inflate(R.layout.data_bar_top, topBar, true);
-		inf.inflate(R.layout.data_bar_bottom, bottomBar, true);
-		// Inflate map_screen once
+		LayoutInflater inf = getLayoutInflater();
+		// Inflate map_screen into midPanel
 		View mapScreenView = inf.inflate(R.layout.map_screen, midPanel, true);
 		FrameLayout mapContainer = mapScreenView.findViewById(R.id.map_container);
 
-//		ViewGroup midPanel = findViewById(R.id.mid_panel);
-//		ViewGroup topBar = findViewById(R.id.top_bar);
-//		ViewGroup bottomBar = findViewById(R.id.bottom_bar);
-
-		// Create the map fragment programmatically
+		// Create the map fragment
 		SupportMapFragment mapFragment = SupportMapFragment.newInstance();
 		getSupportFragmentManager()
 				.beginTransaction()
 				.replace(mapContainer.getId(), mapFragment)
 				.commit();
-
-		// Ensure fragment is attached before requesting the map
 		getSupportFragmentManager().executePendingTransactions();
 		mapFragment.getMapAsync(this);
-//		initCompassToggle();
 
-		// Button-ize the bottom bar buttons
+		// Initialize bottom bar buttons (already included in main.xml)
 		VarVault.localMap = bottomBar.findViewById(R.id.btn_localmap);
 		VarVault.localMapLL = bottomBar.findViewById(R.id.btn_localmap_box);
-		VarVault.localMap.setTypeface(VarVault.font);
-		VarVault.localMapLL.setOnClickListener(v -> showLocalMap());
-
+		if (VarVault.localMap != null) VarVault.localMap.setTypeface(VarVault.font);
+		if (VarVault.localMapLL != null) VarVault.localMapLL.setOnClickListener(v -> showLocalMap());
 
 		VarVault.worldMap = bottomBar.findViewById(R.id.btn_worldmap);
 		VarVault.worldMapLL = bottomBar.findViewById(R.id.btn_worldmap_box);
-		VarVault.worldMap.setTypeface(VarVault.font);
-		VarVault.worldMapLL.setOnClickListener(v -> showWorldMap());
+		if (VarVault.worldMap != null) VarVault.worldMap.setTypeface(VarVault.font);
+		if (VarVault.worldMapLL != null) VarVault.worldMapLL.setOnClickListener(v -> showWorldMap());
 
 		VarVault.quests = bottomBar.findViewById(R.id.btn_quests);
 		VarVault.questsLL = bottomBar.findViewById(R.id.btn_quests_box);
-		VarVault.quests.setTypeface(VarVault.font);
-		VarVault.questsLL.setOnClickListener(this);
+		if (VarVault.quests != null) VarVault.quests.setTypeface(VarVault.font);
+		if (VarVault.questsLL != null) VarVault.questsLL.setOnClickListener(this);
 
 		VarVault.notes = bottomBar.findViewById(R.id.btn_notes);
 		VarVault.notesLL = bottomBar.findViewById(R.id.btn_notes_box);
-		VarVault.notes.setTypeface(VarVault.font);
-		VarVault.notesLL.setOnClickListener(this);
+		if (VarVault.notes != null) VarVault.notes.setTypeface(VarVault.font);
+		if (VarVault.notesLL != null) VarVault.notesLL.setOnClickListener(this);
 
 		VarVault.radio = bottomBar.findViewById(R.id.btn_radio);
 		VarVault.radioLL = bottomBar.findViewById(R.id.btn_radio_box);
-		VarVault.radio.setTypeface(VarVault.font);
-		VarVault.radioLL.setOnClickListener(v -> radioClicked(currentStation));
-
-
+		if (VarVault.radio != null) VarVault.radio.setTypeface(VarVault.font);
+		if (VarVault.radioLL != null) VarVault.radioLL.setOnClickListener(v -> radioClicked(currentStation));
 	}
-
-
 
 	private void statusClicked() {
 
@@ -1359,6 +1342,8 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 
 		mMap.getUiSettings().setIndoorLevelPickerEnabled(false);
 
+		//has to be last! otherwise it will appear again.
+		VarVault.mMap.getUiSettings().setMyLocationButtonEnabled(false);
 		try {
 			MapStyleOptions style = MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style);
 			boolean success = mMap.setMapStyle(style);
@@ -1913,23 +1898,33 @@ public class MainMenu extends AppCompatActivity implements OnMapReadyCallback, S
 		LinearLayout midPanel = findViewById(R.id.mid_panel);
 		midPanel.removeAllViews();
 
-		LayoutInflater inf = LayoutInflater.from(this);
-		View radioScreenView = inf.inflate(R.layout.radio, midPanel, false);
-		midPanel.addView(radioScreenView);
+		View radioScreenView = LayoutInflater.from(this)
+				.inflate(R.layout.radio, midPanel, false);
 
-		// Grab views
+		radioScreenView.setBackgroundColor(Color.RED); // debug color
+
+		midPanel.addView(radioScreenView); // <<< MUST do this
+		// Assign to existing fields — NO "RecyclerView recyclerView" here!
 		recyclerView = radioScreenView.findViewById(R.id.recycler_view);
 		nowPlayingText = radioScreenView.findViewById(R.id.now_playing);
+		TextView hostLink = radioScreenView.findViewById(R.id.radio_host_link);
 
-		// Create adapter once
+		// Setup host link
+		hostLink.setText("Original host: https://buymeacoffee.com/beenreported");
+		hostLink.setOnClickListener(v -> {
+			Intent browserIntent = new Intent(Intent.ACTION_VIEW,
+					Uri.parse("https://buymeacoffee.com/beenreported"));
+			startActivity(browserIntent);
+		});
+
+		// Setup RecyclerView
+		recyclerView.setLayoutManager(new LinearLayoutManager(this));
 		radioAdapter = new RadioStationAdapter(
 				RadioStationList.getStations(),
 				this::radioClicked
 		);
-		recyclerView.setLayoutManager(new LinearLayoutManager(this));
 		recyclerView.setAdapter(radioAdapter);
 	}
-
 
 	private void radioPowerToggle() {
 		radioOn = !radioOn; // toggle state

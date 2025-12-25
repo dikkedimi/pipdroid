@@ -5,6 +5,7 @@
         android:id="@+id/radio_root"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:orientation="vertical"
         android:background="@drawable/bg_repeat">
 
     <!-- Header: Power button + Now Playing -->
@@ -12,6 +13,7 @@
             android:id="@+id/radio_header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+
             android:padding="8dp">
 
         <!-- Now Playing -->
@@ -58,6 +60,18 @@
             android:padding="4dp"
             android:clipToPadding="false"
             android:scrollbars="vertical"/>
+    <TextView
+            android:id="@+id/radio_host_link"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Original host: beenreported"
+            android:textColor="@color/teal_200"
+            android:autoLink="web"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="8dp"
+    />
+
     <RecyclerView
             android:id="@+id/recycler_view"
             android:layout_width="match_parent"

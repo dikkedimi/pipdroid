@@ -5,7 +5,8 @@
     android:layout_height="match_parent"
     android:baselineAligned="false"
     android:orientation="horizontal" >
-    
+    
+
     <SurfaceView
         android:id="@+id/PREVIEW"
         android:layout_width="1dip"
@@ -42,7 +43,9 @@
             android:layout_weight="0.3"
             android:gravity="center"
             android:orientation="vertical">
-            
+            
+
+
             <TextView
                 android:id="@+id/left_button_stats"
                 android:layout_width="wrap_content"
@@ -123,7 +126,7 @@
             android:layout_width="fill_parent"
             android:layout_height="50dip"
             android:layout_alignParentTop="true" android:gravity="bottom">
-        
+
             <ImageView
                 android:id="@+id/top_left"
                 android:layout_width="wrap_content"
@@ -148,6 +151,7 @@
                 android:layout_toRightOf="@+id/top_left"
                 android:background="@drawable/top_bar"
                 android:orientation="vertical" >
+                <include layout="@layout/data_bar_top"/>
             </LinearLayout>
             
         </RelativeLayout>
@@ -173,7 +177,8 @@
                 android:layout_alignParentRight="true"
                 android:layout_marginRight="10dip"
                 android:src="@drawable/bottom_right" />
-
+
+
             <LinearLayout
                 android:id="@+id/bottom_bar"
                 android:layout_width="fill_parent"
@@ -183,19 +188,12 @@
                 android:background="@drawable/bottom_bar"
                 android:gravity="bottom|center"
                 android:orientation="horizontal" >
+                <include layout="@layout/data_bar_bottom"/>
             </LinearLayout>
 
         </RelativeLayout>
+        <include layout="@layout/map_screen"/>
 
-        <LinearLayout
-            android:id="@+id/mid_panel"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:layout_above="@+id/bottom_panel"
-            android:layout_below="@+id/top_panel"
-            android:orientation="horizontal" >
-            
-        </LinearLayout>
-    </RelativeLayout>
+</RelativeLayout>
 
 </RelativeLayout>
