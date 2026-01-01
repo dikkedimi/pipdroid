@@ -113,91 +113,119 @@
     </LinearLayout>
 
     <!-- Entire pane to the right of the buttons -->
+<!--    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
+<!--                 android:layout_width="match_parent"-->
+<!--                 android:layout_height="match_parent"-->
+<!--                 android:background="@drawable/crt_screen"-->
+<!--                 android:id="@+id/crt_screen_wrapper">-->
 
-    <RelativeLayout
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:layout_toRightOf="@+id/left_panel"
-        android:background="@drawable/bg_repeat"
-        android:orientation="vertical" >
+<!--    <ImageView-->
+<!--            android:id="@+id/crt_image"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:src="@drawable/crt_screen" />-->
 
+<!--    <TextView-->
+<!--            android:id="@+id/crt_title"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:text="Welcome to the CRT"-->
+<!--            android:textSize="50sp"-->
+<!--            android:textColor="#ffffff"-->
+<!--            android:gravity="center" />-->
+
+
+<!--    <TextView-->
+<!--            android:id="@+id/crt_alternate_text"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:text="Turn on the CRT!"-->
+<!--            android:textSize="24sp"-->
+<!--            android:textColor="#ffffff"-->
+<!--            android:gravity="center" />-->
         <RelativeLayout
-            android:id="@+id/top_panel"
             android:layout_width="fill_parent"
-            android:layout_height="50dip"
-            android:layout_alignParentTop="true" android:gravity="bottom">
+            android:layout_height="fill_parent"
+            android:layout_toRightOf="@+id/left_panel"
+            android:background="@drawable/bg_repeat"
+            android:orientation="vertical" >
 
-            <ImageView
-                android:id="@+id/top_left"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
-                android:layout_marginLeft="10dip"
-                android:src="@drawable/top_left" />
+            <RelativeLayout
+                android:id="@+id/top_panel"
+                android:layout_width="fill_parent"
+                android:layout_height="50dip"
+                android:layout_alignParentTop="true" android:gravity="bottom">
 
-            <ImageView
-                android:id="@+id/top_right"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
-                android:layout_marginRight="10dip"
-                android:src="@drawable/top_right" />
-
-            <LinearLayout
-                    android:id="@+id/top_bar"
-                    android:layout_width="fill_parent"
+                <ImageView
+                    android:id="@+id/top_left"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_toLeftOf="@id/top_right"
-                    android:layout_toRightOf="@id/top_left"
-                    android:background="@drawable/top_bar"
-                    android:orientation="vertical"/>
-        </RelativeLayout>
+                    android:layout_alignParentLeft="true"
+                    android:layout_marginLeft="10dip"
+                    android:src="@drawable/top_left" />
 
-        <RelativeLayout
-            android:id="@+id/bottom_panel"
-            android:layout_width="fill_parent"
-            android:layout_height="50dip"
-            android:layout_alignParentBottom="true" >
-
-            <ImageView
-                android:id="@+id/bottom_left"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
-                android:layout_marginLeft="10dip"
-                android:src="@drawable/bottom_left" />
-
-            <ImageView
-                android:id="@+id/bottom_right"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
-                android:layout_marginRight="10dip"
-                android:src="@drawable/bottom_right" />
-
-
-            <LinearLayout
-                    android:id="@+id/bottom_bar"
-                    android:layout_width="fill_parent"
+                <ImageView
+                    android:id="@+id/top_right"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_toLeftOf="@id/bottom_right"
-                    android:layout_toRightOf="@id/bottom_left"
-                    android:background="@drawable/bottom_bar"
-                    android:gravity="center"
-                    android:orientation="horizontal"/>
+                    android:layout_alignParentRight="true"
+                    android:layout_marginRight="10dip"
+                    android:src="@drawable/top_right" />
 
+                <LinearLayout
+                        android:id="@+id/top_bar"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_toLeftOf="@id/top_right"
+                        android:layout_toRightOf="@id/top_left"
+                        android:background="@drawable/top_bar"
+                        android:orientation="vertical"/>
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/bottom_panel"
+                android:layout_width="fill_parent"
+                android:layout_height="50dip"
+                android:layout_alignParentBottom="true" >
+
+                <ImageView
+                    android:id="@+id/bottom_left"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentLeft="true"
+                    android:layout_marginLeft="10dip"
+                    android:src="@drawable/bottom_left" />
+
+                <ImageView
+                    android:id="@+id/bottom_right"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_marginRight="10dip"
+                    android:src="@drawable/bottom_right" />
+
+
+                <LinearLayout
+                        android:id="@+id/bottom_bar"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_toLeftOf="@id/bottom_right"
+                        android:layout_toRightOf="@id/bottom_left"
+                        android:background="@drawable/bottom_bar"
+                        android:gravity="center"
+                        android:orientation="horizontal"/>
+
+            </RelativeLayout>
+            <RelativeLayout
+                    android:id="@+id/data_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_below="@id/top_panel"
+                    android:layout_above="@id/bottom_panel">
+
+                <include layout="@layout/map_screen"/>
+
+            </RelativeLayout>
         </RelativeLayout>
-        <RelativeLayout
-                android:id="@+id/data_content"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_below="@id/top_panel"
-                android:layout_above="@id/bottom_panel">
-
-            <include layout="@layout/map_screen"/>
-
-        </RelativeLayout>
-
-</RelativeLayout>
-
+<!--    </FrameLayout>-->
 </RelativeLayout>

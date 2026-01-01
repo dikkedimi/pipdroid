@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.media3.common)
     implementation(libs.recyclerview)
+    implementation(libs.core.animation)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

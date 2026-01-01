@@ -3,8 +3,10 @@ package com.skettidev.pipdroid;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.hardware.Camera;
+import android.hardware.Sensor;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -15,11 +17,42 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class VarVault {
-// init maps
+// views
+// ImageViews
+	public static ImageView topLeft;
+	public static ImageView topRight;
+	public static ImageView bottomLeft;
+	public static ImageView bottomRight;
+	public static TextView left_button_items;
+	public static void clearViews() {
+		title = null;
+		hp = null;
+		ap = null;
+		bat = null;
+		// any other View references
+	}
+
+//	public static LinearLayout statsLL;
+//	public static LinearLayout statusLL;
+//	public static LinearLayout specialLL;
+//	public static LinearLayout skillsLL;
+	public static Map<String, LinearLayout> linearLayouts = new HashMap<>();
+	public static Map<String, ImageView> imageViews = new HashMap<>();
+	public static Map<String, TextView> labels = new HashMap<>();
+	public static Map<String, TextView> textViews = new HashMap<>();
+
+	// Layouts
+	public static LinearLayout leftPanel;
+	// init maps
 	public static GoogleMap mMap;
 	public static LatLng playerLocation;
+
+	public static Sensor playerOrientation;
+	public static Sensor playerMovement;
 
 	// set local & world map zoom values
 	public static final float WORLD_MAP_ZOOM = 13.5f; // city-wide
@@ -27,6 +60,9 @@ public class VarVault {
 
 	public static final boolean setMyLocationButtonEnabledBool = false;
 	public static final boolean setMyLocationEnabledBool = true;
+
+	public static final int textColor = Color.argb(100, 0, 225, 0);;
+
 	// SPECIAL stats
 
 	protected static Stat strength = new Stat(), perception = new Stat(), endurance = new Stat(), charisma = new Stat(), intelligence = new Stat(), agility = new Stat(), luck = new Stat();

@@ -105,6 +105,19 @@
       {
         "color": "#005a02"
       }
+
+    ]
+  },
+  {
+    "featureType": "landscape.man_made",
+    "elementType": "geometry.stroke",
+    "stylers": [
+      {
+        "color": "#00cc11"
+      },
+      {
+        "visibility": "on"
+      }
     ]
   },
   {
@@ -508,7 +521,40 @@
     "elementType": "labels.text",
     "stylers": [
       {
-        "color": "#001A0B"
+        "visibility": "on"
+      }
+    ]
+  },
+  {
+    "featureType": "water",
+    "elementType": "labels.text",
+    "stylers": [
+      {
+        "visibility": "on"
+      }
+    ]
+  },
+  {
+    "featureType": "water",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#009e0b"
+      },
+      {
+        "visibility": "on"
+      }
+    ]
+  },
+  {
+    "featureType": "water",
+    "elementType": "labels.text.stroke",
+    "stylers": [
+      {
+        "color": "#e6fff1"
+      },
+      {
+        "visibility": "on"
       }
     ]
   }
